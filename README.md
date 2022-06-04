@@ -29,5 +29,8 @@ Note that values of **0**% (for *Additional Interactables* & *Teleporter Duratio
 
 ## Version History
 
+#### `0.3.3`
+- *Teleporter Duration* parameter no longer applies to zones that would otherwise be unaffected by player count. Increase escape sequence duration proportionally to ensure sufficient time is always available.
+
 #### `0.3.2` ***- Initial Release***
 - Support for both singleplayer and multiplayer lobbies. Only the host needs to have this mod installed.

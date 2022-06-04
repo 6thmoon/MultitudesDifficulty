@@ -132,7 +132,8 @@ namespace Local.Difficulty.Multitudes
 		[HarmonyPrefix]
 		private static void AdjustChargeRate(HoldoutZoneController __instance)
 		{
-			if ( __instance.chargingTeam == TeamIndex.Player )
+			if ( __instance.chargingTeam == TeamIndex.Player &&
+					__instance.playerCountScaling != 0 )
 			{
 				int realPlayerCount = GetRealPlayerCount(Run.instance.participatingPlayerCount);
 
@@ -144,6 +145,15 @@ namespace Local.Difficulty.Multitudes
 				Console.WriteLine("Charge rate reduced by " +
 						 ( 1 - multiplier ).ToString("0.#%") + " for holdout zone.");
 			}
+		}
+
+		[HarmonyPatch(typeof(EscapeSequenceController),
+				nameof(EscapeSequenceController.BeginEscapeSequence))]
+		[HarmonyPrefix]
+		private static void IncreaseCountdown(EscapeSequenceController __instance)
+		{
+			__instance.countdownDuration *= (float)( 1 + 
+					teleporterChargeRate * additionalPlayers );
 		}
 
 		private static readonly MethodInfo getRealPlayerCount =
