@@ -1,6 +1,6 @@
 {
 	"name": "MultitudesDifficulty",
-	"version_number": "0.3.3",
+	"version_number": "0.3.4",
 	"website_url": "https://github.com/6thmoon/MultitudesDifficulty",
 	"description": 
 		"Adds a difficulty option that increases the effective player count. Fully configurable.",

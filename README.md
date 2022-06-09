@@ -27,7 +27,12 @@ Note that values of **0**% (for *Additional Interactables* & *Teleporter Duratio
 
 - In multiplayer, clients may notice inaccurate information presented in the user interface regarding difficulty level. This is purely visual and should not affect gameplay nor the host.
 
+Please report any feedback or issues discovered [here](https://github.com/6thmoon/MultitudesDifficulty/issues). Feel free to check out my [other](https://thunderstore.io/package/6thmoon/CurseCatcher/) released content too.
+
 ## Version History
+
+#### `0.3.4`
+- Fix compatibility issue with plugins that utilize *R2API* submodule *DifficultyAPI*.
 
 #### `0.3.3`
 - *Teleporter Duration* parameter no longer applies to zones that would otherwise be unaffected by player count. Increase escape sequence duration proportionally to ensure sufficient time is always available.

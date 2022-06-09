@@ -1,4 +1,5 @@
 ﻿using BepInEx;
+using BepInEx.Bootstrap;
 using BepInEx.Configuration;
 using HarmonyLib;
 using RoR2;
@@ -7,6 +8,7 @@ using System.Linq;
 using System.Reflection;
 using System.Security.Permissions;
 using UnityEngine;
+using DifficultyAPI = R2API.DifficultyAPI;
 using Resources = MultitudesDifficulty.Properties.Resources;
 
 [assembly: AssemblyVersion(Local.Difficulty.Multitudes.Setup.versionNumber)]
@@ -16,9 +18,11 @@ using Resources = MultitudesDifficulty.Properties.Resources;
 namespace Local.Difficulty.Multitudes
 {
 	[BepInPlugin("local.difficulty.multitudes", "MultitudesDifficulty", versionNumber)]
+	[BepInDependency(r2api, BepInDependency.DependencyFlags.SoftDependency)]
 	public class Setup : BaseUnityPlugin
 	{
-		public const string versionNumber = "0.3.3";
+		public const string versionNumber = "0.3.4";
+		private const string r2api = R2API.R2API.PluginGUID;
 
 		public static DifficultyIndex multitudesIndex = DifficultyIndex.Invalid;
 		public static Color colorTheme;
@@ -167,6 +171,13 @@ namespace Local.Difficulty.Multitudes
 
 			RuleCatalog.allChoicesDefs.Add(ruleChoice);
 			RuleCatalog.ruleChoiceDefsByGlobalName[ruleChoice.globalName] = ruleChoice;
+
+			if ( Chainloader.PluginInfos.ContainsKey(r2api) ) SupportR2API();
+			void SupportR2API()
+			{
+				if ( DifficultyAPI.Loaded )
+					DifficultyAPI.difficultyDefinitions[multitudesIndex] = multitudesDifficulty;
+			}
 		}
 
 		[HarmonyPatch(typeof(DifficultyCatalog), nameof(DifficultyCatalog.GetDifficultyDef))]
