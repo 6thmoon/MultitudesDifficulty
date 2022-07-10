@@ -34,7 +34,7 @@ namespace Local.Difficulty.Multitudes
 		{
 			LoadConfiguration();
 
-			Color drizzle = DifficultyCatalog.GetDifficultyDef(DifficultyIndex.Easy).color;
+			Color drizzle = ColorCatalog.GetColor(ColorCatalog.ColorIndex.EasyDifficulty);
 			colorTheme = new Color(r: drizzle.r, g: drizzle.b, b: drizzle.g);
 
 			multitudesDifficulty = new DifficultyDef(
@@ -150,14 +150,14 @@ namespace Local.Difficulty.Multitudes
 						Session.additionalPlayers ).ToString("0.#%") + "</color>";
 		}
 
-		private static RuleDef difficulties => RuleCatalog.allRuleDefs.First();
+		private static RuleDef DifficultyRule => RuleCatalog.allRuleDefs.First();
 
 		[HarmonyPatch(typeof(RuleCatalog), nameof(RuleCatalog.Init))]
 		[HarmonyPostfix]
 		private static void AddDifficulty()
 		{
 			RuleChoiceDef ruleChoice =
-					difficulties.AddChoice(multitudesDifficulty.nameToken);
+					DifficultyRule.AddChoice(multitudesDifficulty.nameToken);
 
 			// Arbitrary value - should match on host/client, large enough to prevent conflicts.
 			multitudesIndex = DifficultyIndex.Invalid + ( Session.eclipseMode ? 1 : -1 ) * 0x7F;
@@ -207,7 +207,7 @@ namespace Local.Difficulty.Multitudes
 			return true;
 		}
 
-		private static DifficultyIndex baseDifficulty => Session.eclipseMode ? 
+		private static DifficultyIndex BaseDifficulty => Session.eclipseMode ?
 				DifficultyIndex.Eclipse8 : DifficultyIndex.Hard;
 
 		[HarmonyPatch(typeof(NetworkExtensions), nameof(NetworkExtensions.Write),
@@ -221,7 +221,7 @@ namespace Local.Difficulty.Multitudes
 				ruleBook.Copy(src);
 
 				ruleBook.ApplyChoice(
-						difficulties.FindChoice(baseDifficulty.ToString())
+						DifficultyRule.FindChoice(BaseDifficulty.ToString())
 					);
 				src = ruleBook;
 			}
@@ -234,7 +234,7 @@ namespace Local.Difficulty.Multitudes
 			__state = __instance.selectedDifficultyInternal;
 
 			if ( __instance.selectedDifficulty == multitudesIndex )
-				__instance.selectedDifficultyInternal = (int) baseDifficulty;
+				__instance.selectedDifficultyInternal = (int) BaseDifficulty;
 		}
 
 		[HarmonyPatch(typeof(Run), nameof(Run.OnSerialize))]

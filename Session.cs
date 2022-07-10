@@ -2,6 +2,7 @@
 using RoR2;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using UnityEngine.Networking;
@@ -82,21 +83,20 @@ namespace Local.Difficulty.Multitudes
 //		[HarmonyPrefix]
 		private static void AdjustInteractableCredits(SceneDirector __instance)
 		{
-			int bonusCredits = 0;
-			foreach ( ClassicStageInfo.BonusInteractibleCreditObject bonusObject
-					in ClassicStageInfo.instance?.bonusInteractibleCreditObjects
-							?? new ClassicStageInfo.BonusInteractibleCreditObject[0] )
-			{
-				if ( bonusObject.objectThatGrantsPointsIfEnabled?.activeSelf == true )
-					bonusCredits += bonusObject.points;
-			}
+			int bonus = ClassicStageInfo.instance?.bonusInteractibleCreditObjects?.Where(
+					obj => obj.objectThatGrantsPointsIfEnabled?.activeSelf is true
+				).Sum( obj => obj.points ) ?? 0;
 
-			decimal extraCredits = ( __instance.interactableCredit - bonusCredits ) *
+			decimal extraCredits = ( __instance.interactableCredit - bonus ) *
 					additionalPlayers / (decimal)( Run.instance.participatingPlayerCount + 1 );
 
-			if ( "artifactworld" == SceneInfo.instance?.sceneDef?.baseSceneName
-					&& !extraRewards )
-				Console.WriteLine("Prevent extra interactables in artifact portal.");
+			SceneDef currentScene = SceneInfo.instance?.sceneDef;
+			string sceneName = currentScene?.baseSceneName;
+			bool hiddenRealms = sceneName == "arena" || sceneName == "voidstage" ||
+					currentScene?.sceneType == SceneType.Intermission;
+
+			if ( hiddenRealms && ! extraRewards )
+				Console.WriteLine("Prevent extra interactables in hidden realms.");
 			else extraCredits *= 1 - interactableScale;
 			extraCredits = Math.Round(extraCredits, MidpointRounding.AwayFromZero);
 
