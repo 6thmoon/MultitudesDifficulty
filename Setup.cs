@@ -1,4 +1,7 @@
-﻿using BepInEx;
+﻿extern alias Legacy;
+using DifficultyAPI = R2API.DifficultyAPI;
+using LegacyAPI = Legacy::R2API.DifficultyAPI;
+using BepInEx;
 using BepInEx.Bootstrap;
 using BepInEx.Configuration;
 using HarmonyLib;
@@ -6,9 +9,9 @@ using RoR2;
 using System;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Security.Permissions;
 using UnityEngine;
-using DifficultyAPI = R2API.DifficultyAPI;
 using Resources = MultitudesDifficulty.Properties.Resources;
 
 [assembly: AssemblyVersion(Local.Difficulty.Multitudes.Setup.versionNumber)]
@@ -18,11 +21,9 @@ using Resources = MultitudesDifficulty.Properties.Resources;
 namespace Local.Difficulty.Multitudes
 {
 	[BepInPlugin("local.difficulty.multitudes", "MultitudesDifficulty", versionNumber)]
-	[BepInDependency(r2api, BepInDependency.DependencyFlags.SoftDependency)]
 	public class Setup : BaseUnityPlugin
 	{
-		public const string versionNumber = "0.3.4";
-		private const string r2api = R2API.R2API.PluginGUID;
+		public const string versionNumber = "0.3.5";
 
 		public static DifficultyIndex multitudesIndex = DifficultyIndex.Invalid;
 		public static Color colorTheme;
@@ -172,12 +173,24 @@ namespace Local.Difficulty.Multitudes
 			RuleCatalog.allChoicesDefs.Add(ruleChoice);
 			RuleCatalog.ruleChoiceDefsByGlobalName[ruleChoice.globalName] = ruleChoice;
 
-			if ( Chainloader.PluginInfos.ContainsKey(r2api) ) SupportR2API();
-			void SupportR2API()
-			{
-				if ( DifficultyAPI.Loaded )
-					DifficultyAPI.difficultyDefinitions[multitudesIndex] = multitudesDifficulty;
-			}
+			if ( Chainloader.PluginInfos.ContainsKey(module) ) SupportAPI();
+			else if ( Chainloader.PluginInfos.TryGetValue(r2api, out PluginInfo plugin)
+					&& plugin.Metadata.Version < Version.Parse(newVersion)
+				) LegacySupport();
+		}
+
+		private const string r2api = Legacy::R2API.R2API.PluginGUID,
+				newVersion = R2API.R2API.PluginVersion, module = DifficultyAPI.PluginGUID;
+
+		[MethodImpl(MethodImplOptions.NoInlining)]
+		private static void SupportAPI()
+				=> DifficultyAPI.difficultyDefinitions[multitudesIndex] = multitudesDifficulty;
+
+		[MethodImpl(MethodImplOptions.NoInlining)]
+		private static void LegacySupport()
+		{
+			if ( LegacyAPI.Loaded )
+				LegacyAPI.difficultyDefinitions[multitudesIndex] = multitudesDifficulty;
 		}
 
 		[HarmonyPatch(typeof(DifficultyCatalog), nameof(DifficultyCatalog.GetDifficultyDef))]

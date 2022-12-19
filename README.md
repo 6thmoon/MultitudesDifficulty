@@ -31,6 +31,9 @@ Please report any feedback or issues discovered [here](https://github.com/6thmoo
 
 ## Version History
 
+#### `0.3.5`
+- Update dependencies.
+
 #### `0.3.4`
 - Fix compatibility issue with plugins that utilize *R2API* submodule *DifficultyAPI*.
 

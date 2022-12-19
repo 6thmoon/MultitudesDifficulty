@@ -6,11 +6,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="BepInEx.BaseLib" Version="5.4.19" />
-    <PackageReference Include="HarmonyX" Version="2.10.0" />
+    <PackageReference Include="BepInEx.BaseLib" Version="5.4.21" />
+    <PackageReference Include="HarmonyX" Version="2.10.1" />
     <PackageReference Include="RiskOfRain2.GameLibs" Version="1.2.4-r.0" />
-    <PackageReference Include="UnityEngine.Modules" Version="2019.4.26"/>
-    <PackageReference Include="R2API" Version="4.4.1" />
+    <PackageReference Include="UnityEngine.Modules" Version="2019.4.26" />
+    <PackageReference Include="R2API.Difficulty" Version="1.0.0" />
+    <PackageReference Include="R2API" Version="4.4.1" Aliases="Legacy" />
   </ItemGroup>
 
   <ItemGroup>
