@@ -18,18 +18,23 @@ It is recommended that you install with [*r2modman*](https://thunderstore.io/pac
 | Eclipse Mode | *True/False* | Use eclipse modifiers. Not for the faint of heart. |
 | Additional Interactables | *Percent* | Increasing this percentage results in additional interactables (i.e. chests, shrines, & other loot), relative to player count. |
 | Extra Item Rewards | *True/False*  | Enable to drop additional items during the teleporter event, Void Fields, and the Simulacrum. |
+| Income Penalty | *Percent* | Gold is typically split between all players. Lower this value to lessen this effect. |
 | Teleporter Duration | *Percent* | The extent at which player count is considered when determining charge rate for holdout zones. Higher values result in slower charge. |
+| Bonus Health | *Percent* | Certain enemies receive bonus health in multiplayer. Reduce the amount granted to teleporter bosses and the like. |
 | Force Enable | *True/False* | Force player count adjustment regardless of difficulty selection. For use with other custom difficulty modes. |
 
-Note that values of **0**% (for *Additional Interactables* & *Teleporter Duration*) and **false** (*Extra Item Rewards*) will result in identical behavior to an unmodded game with respect to each parameter. By contrast, selecting **100**% (or **true**) will provide the full effect of *Additional Player Count*.
+Note that values of **0**% will always result in identical behavior to an singleplayer game with respect to each parameter. By contrast, selecting **100**% will provide the full effect of *Additional Player Count*.
 
 ## Known Issues
 
 - In multiplayer, clients may notice inaccurate information presented in the user interface regarding difficulty level. This is purely visual and should not affect gameplay nor the host.
 
-Please report any feedback or issues discovered [here](https://github.com/6thmoon/MultitudesDifficulty/issues). Feel free to check out my [other](https://thunderstore.io/package/6thmoon/CurseCatcher/) released content too.
+Please report any feedback or issues discovered [here](https://github.com/6thmoon/MultitudesDifficulty/issues). Feel free to check out my [other](https://thunderstore.io/package/6thmoon/?ordering=top-rated) released content too.
 
 ## Version History
+
+#### `0.4.0`
+- Add option to limit penalties to player income and boss health.
 
 #### `0.3.5`
 - Update dependencies.

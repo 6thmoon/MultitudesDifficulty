@@ -17,6 +17,8 @@ namespace Local.Difficulty.Multitudes
 		public static bool eclipseMode;
 		public static decimal interactableScale;
 		public static bool extraRewards;
+		public static decimal incomePenalty;
+		public static decimal bonusHealth;
 		public static decimal teleporterChargeRate;
 		public static bool forceEnable;
 
@@ -34,7 +36,7 @@ namespace Local.Difficulty.Multitudes
 			}
 		}
 
-		public static void End(Run _)
+		public static void End(object _)
 		{
 			SceneDirector.onPrePopulateSceneServer -= AdjustInteractableCredits;
 			BossGroup.onBossGroupStartServer -= AdjustBossRewards;
@@ -57,7 +59,7 @@ namespace Local.Difficulty.Multitudes
 					});
 
 			if ( RoR2Application.isInMultiPlayer || forceEnable )
-				sendMessage("Multitudes Enabled\n" + Setup.BuildDescription(flavorText: false));
+				sendMessage(Setup.BuildDescription(verbose: false));
 			else if ( eclipseMode )
 				sendMessage("Good luck.");
 		}
@@ -70,14 +72,14 @@ namespace Local.Difficulty.Multitudes
 				GreetUser();
 		}
 
-		[HarmonyPatch(typeof(Run), nameof(Run.livingPlayerCount), MethodType.Getter)]
 		[HarmonyPatch(typeof(Run), nameof(Run.participatingPlayerCount), MethodType.Getter)]
 		[HarmonyPostfix]
-		private static int AdjustPlayerCount(int realPlayerCount)
-				=> realPlayerCount + additionalPlayers;
+		private static int AdjustPlayerCount(int playerCount)
+				=> playerCount > 0 ? playerCount + additionalPlayers : playerCount;
 
-		public static int GetRealPlayerCount(int adjustedPlayerCount)
-				=> adjustedPlayerCount - additionalPlayers;
+		private static int RealPlayerCount => RoR2Application.isInMultiPlayer ?
+				PlatformSystems.lobbyManager.calculatedTotalPlayerCount :
+				PlayerCharacterMasterController.instances.Count;
 
 //		[HarmonyPatch(typeof(SceneDirector), nameof(SceneDirector.PopulateScene))]
 //		[HarmonyPrefix]
@@ -112,20 +114,88 @@ namespace Local.Difficulty.Multitudes
 		{
 			if ( !extraRewards )
 			{
-				int realPlayerCount = GetRealPlayerCount(Run.instance.participatingPlayerCount);
 				int originalRewards = ( 1 + __instance.bonusRewardCount ) * 
 						Run.instance.participatingPlayerCount;
 
 				__instance.scaleRewardsByPlayerCount = false;
 
 				// Increase rewards for multiplayer games...
-				__instance.bonusRewardCount *= realPlayerCount;	// i.e. `Shrine of the Mountain`
-				__instance.bonusRewardCount += realPlayerCount - 1;	// & base rewards.
+				__instance.bonusRewardCount *= RealPlayerCount;	// i.e. `Shrine of the Mountain`
+				__instance.bonusRewardCount += RealPlayerCount - 1;	// & base rewards.
 
 				originalRewards -= 1 + __instance.bonusRewardCount;
 				Console.WriteLine(
 						$"Adjusted boss event to drop { originalRewards } less item(s).");
 			}
+		}
+
+		[HarmonyPatch(typeof(TeamManager), nameof(TeamManager.GiveTeamMoney))]
+		[HarmonyPrefix]
+		private static void AdjustPlayerIncome(ref uint money)
+		{
+			decimal extraIncome = money * additionalPlayers;
+			extraIncome /= Run.instance.participatingPlayerCount;
+
+			money -= (uint)( incomePenalty * extraIncome );
+		}
+
+		[HarmonyPatch(typeof(CombatDirector), nameof(CombatDirector.Spawn))]
+		[HarmonyPatch(typeof(ScriptedCombatEncounter), nameof(ScriptedCombatEncounter.Spawn))]
+		[HarmonyTranspiler]
+		private static IEnumerable<CodeInstruction> InsertHook(
+				MethodBase __originalMethod, IEnumerable<CodeInstruction> instructionList)
+		{
+			MethodInfo directorSpawn =
+					typeof(DirectorCore).GetMethod(nameof(DirectorCore.TrySpawnObject));
+
+			foreach ( CodeInstruction instruction in instructionList )
+			{
+				if ( instruction.Calls(directorSpawn) && bonusHealth > 0 )
+				{
+					yield return new CodeInstruction(OpCodes.Dup);
+					yield return new CodeInstruction(OpCodes.Ldarg_0);
+
+					if ( typeof(CombatDirector) == __originalMethod.DeclaringType )
+						yield return new CodeInstruction(OpCodes.Ldarg_2);
+					else yield return new CodeInstruction(OpCodes.Ldnull);
+
+					yield return CodeInstruction.Call(typeof(Session), nameof(AddBonusHealth));
+				}
+
+				yield return instruction;
+			}
+		}
+
+		private static void AddBonusHealth(
+				DirectorSpawnRequest request, object instance, EliteDef elite)
+		{
+			request.onSpawnedServer += ( SpawnCard.SpawnResult result ) =>
+			{
+				if ( result.success && result.spawnedInstance )
+				{
+					double health = 0;
+
+					if ( instance is CombatDirector director )
+					{
+						if ( director.combatSquad?.grantBonusHealthInMultiplayer is true )
+						{
+							health = elite ? elite.healthBoostCoefficient : 1;
+							health *= additionalPlayers;
+						}
+					}
+					else
+					{
+						health = Run.instance.difficultyCoefficient * 2 / 5;
+						health *= Math.Sqrt(Run.instance.livingPlayerCount + additionalPlayers)
+								- Math.Sqrt(Run.instance.livingPlayerCount);
+					}
+
+					health *= (double) bonusHealth * 10;
+					result.spawnedInstance.GetComponent<Inventory>().GiveItem(
+							RoR2Content.Items.BoostHp, (int) Math.Round(health)
+						);
+				}
+			};
 		}
 
 		[HarmonyPatch(typeof(HoldoutZoneController), nameof(HoldoutZoneController.OnEnable))]
@@ -135,10 +205,8 @@ namespace Local.Difficulty.Multitudes
 			if ( __instance.chargingTeam == TeamIndex.Player &&
 					__instance.playerCountScaling != 0 )
 			{
-				int realPlayerCount = GetRealPlayerCount(Run.instance.participatingPlayerCount);
-
-				decimal multiplier = realPlayerCount / 
-						( realPlayerCount + teleporterChargeRate * additionalPlayers );
+				decimal multiplier = RealPlayerCount /
+						( RealPlayerCount + teleporterChargeRate * additionalPlayers );
 				__instance.calcChargeRate +=
 						( ref float chargeRate ) => chargeRate *= (float) multiplier;
 
@@ -156,44 +224,24 @@ namespace Local.Difficulty.Multitudes
 					teleporterChargeRate * additionalPlayers );
 		}
 
-		private static readonly MethodInfo getRealPlayerCount =
-				typeof(Session).GetMethod(nameof(GetRealPlayerCount));
-
 		[HarmonyPatch(typeof(ArenaMissionController), nameof(ArenaMissionController.EndRound))]
 		[HarmonyPatch(typeof(InfiniteTowerWaveController),
 				nameof(InfiniteTowerWaveController.DropRewards))]
 		[HarmonyTranspiler]		// Adjust rewards for `Void Fields` & `Simulacrum`.
-		private static IEnumerable<CodeInstruction> IgnoreParticipatingPlayerAdjustment(
+		private static IEnumerable<CodeInstruction> IgnorePlayerAdjustment(
 				IEnumerable<CodeInstruction> instructionList)
 		{
-			MethodInfo getParticipatingPlayerCount =
+			MethodInfo getPlayerCount =
 					typeof(Run).GetProperty(nameof(Run.participatingPlayerCount)).GetMethod;
 
 			foreach ( CodeInstruction instruction in instructionList )
 			{
-				yield return instruction;
-
-				if ( instruction.Calls(getParticipatingPlayerCount) 
-						&& !extraRewards )
-					yield return new CodeInstruction(OpCodes.Call, getRealPlayerCount);
-			}
-		}
-
-		[HarmonyPatch(typeof(AllPlayersTrigger), nameof(AllPlayersTrigger.FixedUpdate))]
-		[HarmonyPatch(typeof(MultiBodyTrigger), nameof(MultiBodyTrigger.FixedUpdate))]
-		[HarmonyTranspiler]		// Ensure final boss event triggers on appropriate player count.
-		private static IEnumerable<CodeInstruction> IgnoreLivingPlayerAdjustment(
-				IEnumerable<CodeInstruction> instructionList)
-		{
-			MethodInfo getLivingPlayerCount =
-					typeof(Run).GetProperty(nameof(Run.livingPlayerCount)).GetMethod;
-
-			foreach ( CodeInstruction instruction in instructionList )
-			{
-				yield return instruction;
-
-				if ( instruction.Calls(getLivingPlayerCount) )
-					yield return new CodeInstruction(OpCodes.Call, getRealPlayerCount);
+				if ( instruction.Calls(getPlayerCount) && ! extraRewards )
+				{
+					yield return new CodeInstruction(OpCodes.Pop);
+					yield return Transpilers.EmitDelegate<Func<int>>(( ) => RealPlayerCount );
+				}
+				else yield return instruction;
 			}
 		}
 	}

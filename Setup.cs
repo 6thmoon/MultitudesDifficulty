@@ -23,7 +23,7 @@ namespace Local.Difficulty.Multitudes
 	[BepInPlugin("local.difficulty.multitudes", "MultitudesDifficulty", versionNumber)]
 	public class Setup : BaseUnityPlugin
 	{
-		public const string versionNumber = "0.3.5";
+		public const string versionNumber = "0.4.0";
 
 		public static DifficultyIndex multitudesIndex = DifficultyIndex.Invalid;
 		public static Color colorTheme;
@@ -42,7 +42,7 @@ namespace Local.Difficulty.Multitudes
 						DifficultyCatalog.GetDifficultyDef(DifficultyIndex.Hard).scalingValue,
 					nameToken: "Multitudes",
 					iconPath: null,
-					descriptionToken: BuildDescription(flavorText: true),
+					descriptionToken: BuildDescription(verbose: true),
 					color: colorTheme,
 					serverTag: RoR2ServerTags.mod,
 					countsAsHardMode: true
@@ -91,10 +91,10 @@ namespace Local.Difficulty.Multitudes
 
 			section("Advanced");
 
-			Session.interactableScale = Config.Bind<decimal>(
+			Session.interactableScale = Config.Bind(
 					section: sectionTitle,
 					key: "Additional Interactables",
-					defaultValue: 25,
+					defaultValue: 0m,
 					new ConfigDescription(
 						"Increasing this percentage results in additional interactables"
 						+ " (i.e. chests, shrines, & other loot), relative to player count.",
@@ -109,13 +109,33 @@ namespace Local.Difficulty.Multitudes
 						+ " Void Fields, and the Simulacrum."
 				).Value;
 
+			Session.incomePenalty = Config.Bind(
+					section: sectionTitle,
+					key: "Income Penalty",
+					defaultValue: 75m,
+					new ConfigDescription(
+						"Gold is typically split between all players. Lower this value to"
+						+ " lessen this effect.",
+							new AcceptableValueRange<decimal>(0, 100))
+				).Value / 100;
+
 			Session.teleporterChargeRate = Config.Bind(
 					section: sectionTitle,
 					key: "Teleporter Duration",
-					defaultValue: (decimal) 12.5,
+					defaultValue: 0m,
 					new ConfigDescription(
 						"The extent at which player count is considered when determining charge"
 						+ " rate for holdout zones. Higher values result in slower charge.",
+							new AcceptableValueRange<decimal>(0, 100))
+				).Value / 100;
+
+			Session.bonusHealth = Config.Bind(
+					section: sectionTitle,
+					key: "Bonus Health",
+					defaultValue: 0m,
+					new ConfigDescription(
+						"Certain enemies receive bonus health in multiplayer. Reduce the amount"
+						+ " granted to teleporter bosses and the like.",
 							new AcceptableValueRange<decimal>(0, 100))
 				).Value / 100;
 
@@ -130,13 +150,12 @@ namespace Local.Difficulty.Multitudes
 				).Value;
 		}
 
-		public static string BuildDescription(bool flavorText = false)
+		public static string BuildDescription(bool verbose = false)
 		{
-			return ( flavorText ? "For those who wish to face vast hordes of enemies alone. " +
-						"Multiplayer difficulty levels are in effect.\n\n" : "" ) +
-				( Session.forceEnable ? "" :
-						"<style=cStack>>Base Difficulty:</style> <style=cSub>" +
-						( Session.eclipseMode ? "Eclipse" : "Monsoon" ) + "</style>\n" ) +
+			return ( verbose ? "For those who wish to face vast hordes of enemies alone. " +
+						"Multiplayer difficulty levels are in effect.\n\n" +
+				"<style=cStack>>Base Difficulty:</style> <style=cSub>" +
+						( Session.eclipseMode ? "Eclipse" : "Monsoon" ) + "</style>\n" : "" ) +
 				"<style=cStack>>Player Count:</style> " +
 						$"<style=cDeath>+{ Session.additionalPlayers }</style>\n" +
 				"<style=cStack>>Additional Interactables:</style> " +
@@ -145,9 +164,13 @@ namespace Local.Difficulty.Multitudes
 				"<style=cStack>>Extra Item Rewards:</style> " +
 						( Session.extraRewards ? "<style=cIsHealing>Enabled</style>\n" :
 						"<color=#FF8000>Disabled</color>\n" ) +				// Equipment color.
+				"<style=cStack>>Player Income:</style> <style=cIsUtility>" +
+						'+' + ( 1 - Session.incomePenalty ).ToString("0.#%") + "</style>\n" +
 				"<style=cStack>>Teleporter Duration:</style> <sprite name=\"TP\">" +
 						"<color=#307FFF>+" + ( Session.teleporterChargeRate *	// Lunar color.
-						Session.additionalPlayers ).ToString("0.#%") + "</color>";
+						Session.additionalPlayers ).ToString("0.#%") + "</color>\n" +
+				"<style=cStack>>Enemy Bonus Health:</style> <style=cIsVoid>" +
+						'-' + ( 1 - Session.bonusHealth ).ToString("0.#%") + "</style>";
 		}
 
 		private static RuleDef DifficultyRule => RuleCatalog.allRuleDefs.First();
