@@ -15,8 +15,9 @@ using UnityEngine;
 using Resources = MultitudesDifficulty.Properties.Resources;
 
 [assembly: AssemblyVersion(Local.Difficulty.Multitudes.Setup.versionNumber)]
+#pragma warning disable CS0618
 [assembly: SecurityPermission(SecurityAction.RequestMinimum, SkipVerification = true)]
-		// Allow private member access via publicized assemblies.
+#pragma warning restore CS0618
 
 namespace Local.Difficulty.Multitudes
 {
@@ -196,14 +197,14 @@ namespace Local.Difficulty.Multitudes
 			RuleCatalog.allChoicesDefs.Add(ruleChoice);
 			RuleCatalog.ruleChoiceDefsByGlobalName[ruleChoice.globalName] = ruleChoice;
 
-			if ( Chainloader.PluginInfos.ContainsKey(module) ) SupportAPI();
+			if ( Chainloader.PluginInfos.ContainsKey(submodule) ) SupportAPI();
 			else if ( Chainloader.PluginInfos.TryGetValue(r2api, out PluginInfo plugin)
-					&& plugin.Metadata.Version < Version.Parse(newVersion)
+					&& plugin.Metadata.Version <= Version.Parse(oldVersion)
 				) LegacySupport();
 		}
 
-		private const string r2api = Legacy::R2API.R2API.PluginGUID,
-				newVersion = R2API.R2API.PluginVersion, module = DifficultyAPI.PluginGUID;
+		private const string oldVersion = Legacy::R2API.R2API.PluginVersion,
+				submodule = DifficultyAPI.PluginGUID, r2api = Legacy::R2API.R2API.PluginGUID;
 
 		[MethodImpl(MethodImplOptions.NoInlining)]
 		private static void SupportAPI()

@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
@@ -10,8 +10,9 @@
     <PackageReference Include="HarmonyX" Version="2.10.1" />
     <PackageReference Include="RiskOfRain2.GameLibs" Version="1.2.4-r.0" />
     <PackageReference Include="UnityEngine.Modules" Version="2019.4.26" />
-    <PackageReference Include="R2API.Difficulty" Version="1.0.0" />
+    <PackageReference Include="R2API.Difficulty" Version="1.0.2" />
     <PackageReference Include="R2API" Version="4.4.1" Aliases="Legacy" />
+    <PackageReference Include="MMHOOK.RoR2" ExcludeAssets="all" NoWarn="NU1701;NU1604" />
   </ItemGroup>
 
   <ItemGroup>
