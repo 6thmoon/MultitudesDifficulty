@@ -27,7 +27,7 @@ namespace Local.Difficulty.Multitudes
 		public static void Begin(Run thisRun)
 		{
 			if ( harmonyInstance is null && NetworkServer.active &&
-					thisRun.selectedDifficulty == Setup.multitudesIndex | forceEnable )
+					( thisRun.selectedDifficulty == Setup.index || forceEnable ))
 			{
 				harmonyInstance = Harmony.CreateAndPatchAll(typeof(Session));
 
@@ -54,8 +54,8 @@ namespace Local.Difficulty.Multitudes
 			void sendMessage(string message) =>
 				Chat.SendBroadcastChat(new Chat.SimpleChatMessage {
 						baseToken = "<color=#"
-							+ UnityEngine.ColorUtility.ToHtmlStringRGB(Setup.colorTheme)
-							+ $">" + message + "</color>"
+							+ UnityEngine.ColorUtility.ToHtmlStringRGB(Setup.theme)
+							+ ">" + message + "</color>"
 					});
 
 			if ( RoR2Application.isInMultiPlayer || forceEnable )
@@ -76,10 +76,6 @@ namespace Local.Difficulty.Multitudes
 		[HarmonyPostfix]
 		private static int AdjustPlayerCount(int playerCount)
 				=> playerCount > 0 ? playerCount + additionalPlayers : playerCount;
-
-		private static int RealPlayerCount => RoR2Application.isInMultiPlayer ?
-				PlatformSystems.lobbyManager.calculatedTotalPlayerCount :
-				PlayerCharacterMasterController.instances.Count;
 
 //		[HarmonyPatch(typeof(SceneDirector), nameof(SceneDirector.PopulateScene))]
 //		[HarmonyPrefix]
@@ -112,16 +108,17 @@ namespace Local.Difficulty.Multitudes
 //		[HarmonyPrefix]
 		private static void AdjustBossRewards(BossGroup __instance)
 		{
-			if ( !extraRewards )
+			if ( ! extraRewards )
 			{
+				Setup.GetPlayerCount(out int playerCount);
 				int originalRewards = ( 1 + __instance.bonusRewardCount ) * 
-						Run.instance.participatingPlayerCount;
+						AdjustPlayerCount(playerCount);
 
 				__instance.scaleRewardsByPlayerCount = false;
 
 				// Increase rewards for multiplayer games...
-				__instance.bonusRewardCount *= RealPlayerCount;	// i.e. `Shrine of the Mountain`
-				__instance.bonusRewardCount += RealPlayerCount - 1;	// & base rewards.
+				__instance.bonusRewardCount *= playerCount;		// i.e. `Shrine of the Mountain`
+				__instance.bonusRewardCount += playerCount - 1;			// & base rewards.
 
 				originalRewards -= 1 + __instance.bonusRewardCount;
 				Console.WriteLine(
@@ -205,13 +202,14 @@ namespace Local.Difficulty.Multitudes
 			if ( __instance.chargingTeam == TeamIndex.Player &&
 					__instance.playerCountScaling != 0 )
 			{
-				decimal multiplier = RealPlayerCount /
-						( RealPlayerCount + teleporterChargeRate * additionalPlayers );
+				Setup.GetPlayerCount(out int playerCount);
+				decimal multiplier = playerCount /
+						( playerCount + teleporterChargeRate * additionalPlayers );
 				__instance.calcChargeRate +=
 						( ref float chargeRate ) => chargeRate *= (float) multiplier;
 
 				Console.WriteLine("Charge rate reduced by " +
-						 ( 1 - multiplier ).ToString("0.#%") + " for holdout zone.");
+						 Settings.FormatPercent(1 - multiplier) + " for holdout zone.");
 			}
 		}
 
@@ -227,9 +225,9 @@ namespace Local.Difficulty.Multitudes
 		[HarmonyPatch(typeof(ArenaMissionController), nameof(ArenaMissionController.EndRound))]
 		[HarmonyPatch(typeof(InfiniteTowerWaveController),
 				nameof(InfiniteTowerWaveController.DropRewards))]
-		[HarmonyTranspiler]		// Adjust rewards for `Void Fields` & `Simulacrum`.
-		private static IEnumerable<CodeInstruction> IgnorePlayerAdjustment(
-				IEnumerable<CodeInstruction> instructionList)
+		[HarmonyTranspiler]
+		private static IEnumerable<CodeInstruction>
+				IgnorePlayerAdjustment(IEnumerable<CodeInstruction> instructionList)
 		{
 			MethodInfo getPlayerCount =
 					typeof(Run).GetProperty(nameof(Run.participatingPlayerCount)).GetMethod;
@@ -238,8 +236,10 @@ namespace Local.Difficulty.Multitudes
 			{
 				if ( instruction.Calls(getPlayerCount) && ! extraRewards )
 				{
-					yield return new CodeInstruction(OpCodes.Pop);
-					yield return Transpilers.EmitDelegate<Func<int>>(( ) => RealPlayerCount );
+					yield return Transpilers.EmitDelegate<Func<Run, int>>(( _ ) => {
+							Setup.GetPlayerCount(out int playerCount);
+							return playerCount;
+						});
 				}
 				else yield return instruction;
 			}

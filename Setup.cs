@@ -25,43 +25,55 @@ namespace Local.Difficulty.Multitudes
 	{
 		public const string versionNumber = "0.4.0";
 
-		public static DifficultyIndex multitudesIndex = DifficultyIndex.Invalid;
-		public static Color colorTheme;
+		public static DifficultyIndex index;
+		public static Color theme;
 
-		private static DifficultyDef multitudesDifficulty;
+		private static DifficultyDef difficulty;
 
 		public void Awake()
 		{
 			Settings.Load(Config);
 
 			Color drizzle = ColorCatalog.GetColor(ColorCatalog.ColorIndex.EasyDifficulty);
-			colorTheme = new Color(r: drizzle.r, g: drizzle.b, b: drizzle.g);
+			theme = new Color(r: drizzle.r, g: drizzle.b, b: drizzle.g);
 
-			multitudesDifficulty = new DifficultyDef(
+			index = (DifficultyIndex)( Session.eclipseMode ? sbyte.MaxValue : sbyte.MinValue );
+			difficulty = new DifficultyDef(
 					scalingValue: 
 						DifficultyCatalog.GetDifficultyDef(DifficultyIndex.Hard).scalingValue,
 					nameToken: "Multitudes",
 					iconPath: null,
 					descriptionToken: Settings.BuildDescription(verbose: true),
-					color: colorTheme,
+					color: theme,
 					serverTag: RoR2ServerTags.mod,
 					countsAsHardMode: true
 				);
 
 			Texture2D texture = new Texture2D(0, 0);
-
-			multitudesDifficulty.foundIconSprite = ImageConversion.LoadImage(
-					texture, Session.eclipseMode ? Resources.eclipse : Resources.icon);
-			multitudesDifficulty.iconSprite = Sprite.Create(
+			difficulty.foundIconSprite = ImageConversion.LoadImage(
+					texture, Session.eclipseMode ? Resources.eclipse : Resources.icon
+				);
+			difficulty.iconSprite = Sprite.Create(
 					texture, new Rect(0, 0, texture.width, texture.height),
 					pivot: new Vector2(texture.width / 2, texture.height / 2)
 				);
 
-			if ( !Session.forceEnable )
+			if ( ! Session.forceEnable )
 				Harmony.CreateAndPatchAll(typeof(Setup));
 
 			Run.onRunStartGlobal += Session.Begin;
 			Run.onRunDestroyGlobal += Session.End;
+		}
+
+		[HarmonyPatch(typeof(Run), nameof(Run.participatingPlayerCount), MethodType.Getter)]
+		[HarmonyPrefix]
+		public static bool GetPlayerCount(out int __result)
+		{
+			__result = RoR2Application.isInMultiPlayer ?
+					PlatformSystems.lobbyManager.calculatedTotalPlayerCount :
+					PlayerCharacterMasterController.instances.Count;
+
+			return false;
 		}
 
 		private static RuleDef DifficultyRule => RuleCatalog.allRuleDefs.First();
@@ -70,18 +82,14 @@ namespace Local.Difficulty.Multitudes
 		[HarmonyPostfix]
 		private static void AddDifficulty()
 		{
-			RuleChoiceDef ruleChoice =
-					DifficultyRule.AddChoice(multitudesDifficulty.nameToken);
+			RuleChoiceDef ruleChoice = DifficultyRule.AddChoice(difficulty.nameToken);
 
-			// Arbitrary value - should match on host/client, large enough to prevent conflicts.
-			multitudesIndex = DifficultyIndex.Invalid + ( Session.eclipseMode ? 1 : -1 ) * 0x7F;
-
-			ruleChoice.difficultyIndex = multitudesIndex;
-			ruleChoice.tooltipNameToken = multitudesDifficulty.nameToken;
-			ruleChoice.tooltipNameColor = multitudesDifficulty.color;
-			ruleChoice.tooltipBodyToken = multitudesDifficulty.descriptionToken;
-			ruleChoice.serverTag = multitudesDifficulty.serverTag;
-			ruleChoice.sprite = multitudesDifficulty.iconSprite;
+			ruleChoice.difficultyIndex = index;
+			ruleChoice.tooltipNameToken = difficulty.nameToken;
+			ruleChoice.tooltipNameColor = difficulty.color;
+			ruleChoice.tooltipBodyToken = difficulty.descriptionToken;
+			ruleChoice.serverTag = difficulty.serverTag;
+			ruleChoice.sprite = difficulty.iconSprite;
 			ruleChoice.globalIndex = RuleCatalog.allChoicesDefs.Count;
 
 			RuleCatalog.allChoicesDefs.Add(ruleChoice);
@@ -98,24 +106,24 @@ namespace Local.Difficulty.Multitudes
 
 		[MethodImpl(MethodImplOptions.NoInlining)]
 		private static void SupportAPI()
-				=> DifficultyAPI.difficultyDefinitions[multitudesIndex] = multitudesDifficulty;
+				=> DifficultyAPI.difficultyDefinitions[index] = difficulty;
 
 		[MethodImpl(MethodImplOptions.NoInlining)]
 		private static void LegacySupport()
 		{
 			if ( LegacyAPI.Loaded )
-				LegacyAPI.difficultyDefinitions[multitudesIndex] = multitudesDifficulty;
+				LegacyAPI.difficultyDefinitions[index] = difficulty;
 		}
 
 		[HarmonyPatch(typeof(DifficultyCatalog), nameof(DifficultyCatalog.GetDifficultyDef))]
 		[HarmonyPrefix]
-		private static bool GetDifficulty(DifficultyIndex difficultyIndex, 
-				ref DifficultyDef __result)
+		private static bool GetDifficulty(
+				DifficultyIndex difficultyIndex, ref DifficultyDef __result)
 		{
-			if ( difficultyIndex == multitudesIndex )
+			if ( difficultyIndex == index )
 			{
-				__result = multitudesDifficulty;
-				return false;		// Skip original method execution.
+				__result = difficulty;
+				return false;
 			}
 
 			return true;
@@ -129,7 +137,7 @@ namespace Local.Difficulty.Multitudes
 		[HarmonyPrefix]
 		private static void AdjustRuleBook(ref RuleBook src)
 		{
-			if ( src.FindDifficulty() == multitudesIndex )
+			if ( src.FindDifficulty() == index )
 			{
 				RuleBook ruleBook = new RuleBook();
 				ruleBook.Copy(src);
@@ -147,7 +155,7 @@ namespace Local.Difficulty.Multitudes
 		{
 			__state = __instance.selectedDifficultyInternal;
 
-			if ( __instance.selectedDifficulty == multitudesIndex )
+			if ( __instance.selectedDifficulty == index )
 				__instance.selectedDifficultyInternal = (int) BaseDifficulty;
 		}
 
