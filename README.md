@@ -14,16 +14,16 @@ It is recommended that you install with [*r2modman*](https://thunderstore.io/pac
 
 | Title | Input | Description |
 | - | - | - |
-| Additional Player Count | *1 to 255* | Higher values increase difficulty. Although more enemies will spawn, less money is awarded and purchase costs are increased. |
+| Additional Player Count | *1 to 255* | Higher values increase difficulty. More enemies will spawn and purchase costs are increased. |
 | Eclipse Mode | *True/False* | Use eclipse modifiers. Not for the faint of heart. |
 | Additional Interactables | *Percent* | Increasing this percentage results in additional interactables (i.e. chests, shrines, & other loot), relative to player count. |
-| Extra Item Rewards | *True/False*  | Enable to drop additional items during the teleporter event, Void Fields, and the Simulacrum. |
+| Extra Item Rewards | *True/False*  | Enable to drop additional items during the teleporter event and hidden realms. |
 | Income Penalty | *Percent* | Gold is typically split between all players. Lower this value to lessen this effect. |
 | Teleporter Duration | *Percent* | The extent at which player count is considered when determining charge rate for holdout zones. Higher values result in slower charge. |
 | Bonus Health | *Percent* | Certain enemies receive bonus health in multiplayer. Reduce the amount granted to teleporter bosses and the like. |
 | Force Enable | *True/False* | Force player count adjustment regardless of difficulty selection. For use with other custom difficulty modes. |
 
-Note that values of **0**% will always result in identical behavior to an singleplayer game with respect to each parameter. By contrast, selecting **100**% will provide the full effect of *Additional Player Count*.
+Note that values of **0**% result in identical behavior to an singleplayer game with respect to each parameter. By contrast, selecting **100**% will provide the full effect of *Additional Player Count*.
 
 ## Known Issues
 
