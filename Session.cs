@@ -170,26 +170,31 @@ namespace Local.Difficulty.Multitudes
 			{
 				if ( result.success && result.spawnedInstance )
 				{
+					const double itemBonus = 0.1;
 					double health = 0;
 
-					if ( instance is CombatDirector director )
+					if ( instance is CombatDirector director && director.combatSquad &&
+							director.combatSquad.grantBonusHealthInMultiplayer )
 					{
-						if ( director.combatSquad?.grantBonusHealthInMultiplayer is true )
-						{
-							health = elite ? elite.healthBoostCoefficient : 1;
-							health *= additionalPlayers;
-						}
+						health = elite ? elite.healthBoostCoefficient : 1;
+						health *= additionalPlayers;
 					}
-					else
+					else if ( instance is ScriptedCombatEncounter encounter &&
+							encounter.grantUniqueBonusScaling )
 					{
 						health = Run.instance.difficultyCoefficient * 2 / 5;
 						health *= Math.Sqrt(Run.instance.livingPlayerCount + additionalPlayers)
 								- Math.Sqrt(Run.instance.livingPlayerCount);
 					}
+					else return;
 
-					health *= (double) bonusHealth * 10;
-					result.spawnedInstance.GetComponent<Inventory>().GiveItem(
-							RoR2Content.Items.BoostHp, (int) Math.Round(health)
+					health *= (double) bonusHealth;
+					Console.WriteLine($"Applying " + health.ToString("0.#%") + " additional"
+							+ " bonus health to '" + result.spawnedInstance.name + "'...");
+
+					health = Math.Round(health / itemBonus, MidpointRounding.AwayFromZero);
+					result.spawnedInstance.GetComponent<Inventory>()?.GiveItem(
+							RoR2Content.Items.BoostHp, (int) health
 						);
 				}
 			};
