@@ -59,7 +59,7 @@ namespace Local.Difficulty.Multitudes
 					});
 
 			if ( RoR2Application.isInMultiPlayer || forceEnable )
-				sendMessage(Setup.BuildDescription(verbose: false));
+				sendMessage(Settings.BuildDescription(verbose: false));
 			else if ( eclipseMode )
 				sendMessage("Good luck.");
 		}
