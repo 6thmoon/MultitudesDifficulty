@@ -4,7 +4,7 @@ Looking for a challenge beyond what the standard game modes have to offer? Ever 
 
 At its core, this plugin simply increases the game's internal player count. By leveraging existing functionality to scale up difficulty for multiplayer, we can introduce a harder option while retaining a mostly "vanilla" feel. Enemies will level up faster, and initial spawn rates are also higher - which helps keep the game exciting early on.
 
-![](https://github.com/6thmoon/MultitudesDifficulty/blob/main/Resources/screenshot.png?raw=true)
+![](https://github.com/6thmoon/MultitudesDifficulty/blob/v0.4.1/Resources/screenshot.png?raw=true)
 
 Inspired by the original [*Multitudes*](https://thunderstore.io/package/wildbook/Multitudes/) by **wildbook**, this is a complete re-implementation from the ground up. In addition to improved ease of use via difficulty selection, this mod takes the challenge one step further by introducing additional parameters to reduce advantages that come with an increased player count. After all, in a real multiplayer game, one would generally expect loot to be split among all players.
 
@@ -19,11 +19,11 @@ It is recommended that you install with [*r2modman*](https://thunderstore.io/pac
 | Additional Interactables | *Percent* | Increasing this percentage results in additional interactables (i.e. chests, shrines, & other loot), relative to player count. |
 | Extra Item Rewards | *True/False*  | Enable to drop additional items during the teleporter event and hidden realms. |
 | Income Penalty | *Percent* | Gold is typically split between all players. Lower this value to lessen this effect. |
-| Teleporter Duration | *Percent* | The extent at which player count is considered when determining charge rate for holdout zones. Higher values result in slower charge. |
 | Bonus Health | *Percent* | Certain enemies receive bonus health in multiplayer. Reduce the amount granted to teleporter bosses and the like. |
+| Teleporter Duration | *Percent* | The extent at which player count is considered when determining charge rate for holdout zones. Higher values result in slower charge. |
 | Force Enable | *True/False* | Force player count adjustment regardless of difficulty selection. For use with other custom difficulty modes. |
 
-Note that values of **0**% result in identical behavior to an singleplayer game with respect to each parameter. By contrast, selecting **100**% will provide the full effect of *Additional Player Count*.
+Note that values of **0**% result in identical behavior to a singleplayer game with respect to each parameter. By contrast, selecting **100**% will provide the full effect of *Additional Player Count*.
 
 ## Known Issues
 
@@ -32,6 +32,9 @@ Note that values of **0**% result in identical behavior to an singleplayer game 
 Please report any feedback or issues discovered [here](https://github.com/6thmoon/MultitudesDifficulty/issues). Feel free to check out my [other](https://thunderstore.io/package/6thmoon/?ordering=top-rated) released content too.
 
 ## Version History
+
+#### `0.4.1`
+- Fix issue present in base game that could result in incorrect player count when transitioning from *Multiplayer* to *Singleplayer* lobby.
 
 #### `0.4.0`
 - Add option to limit penalties to player income and boss health.

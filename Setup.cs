@@ -23,7 +23,7 @@ namespace Local.Difficulty.Multitudes
 	[BepInPlugin("local.difficulty.multitudes", "MultitudesDifficulty", versionNumber)]
 	public class Setup : BaseUnityPlugin
 	{
-		public const string versionNumber = "0.4.0";
+		public const string versionNumber = "0.4.1";
 
 		public static DifficultyIndex index;
 		public static Color theme;
