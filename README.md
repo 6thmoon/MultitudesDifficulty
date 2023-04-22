@@ -4,7 +4,7 @@ Looking for a challenge beyond what the standard game modes have to offer? Ever 
 
 At its core, this plugin simply increases the game's internal player count. By leveraging existing functionality to scale up difficulty for multiplayer, we can introduce a harder option while retaining a mostly "vanilla" feel. Enemies will level up faster, and initial spawn rates are also higher - which helps keep the game exciting early on.
 
-![](https://github.com/6thmoon/MultitudesDifficulty/blob/main/screenshot.png?raw=true)
+![](https://github.com/6thmoon/MultitudesDifficulty/blob/main/Resources/screenshot.png?raw=true)
 
 Inspired by the original [*Multitudes*](https://thunderstore.io/package/wildbook/Multitudes/) by **wildbook**, this is a complete re-implementation from the ground up. In addition to improved ease of use via difficulty selection, this mod takes the challenge one step further by introducing additional parameters to reduce advantages that come with an increased player count. After all, in a real multiplayer game, one would generally expect loot to be split among all players.
 
