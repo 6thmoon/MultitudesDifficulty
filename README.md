@@ -6,7 +6,7 @@ At its core, this plugin simply increases the game's internal player count. By l
 
 ![](https://github.com/6thmoon/MultitudesDifficulty/blob/v0.4.1/Resources/screenshot.png?raw=true)
 
-Inspired by the original [*Multitudes*](https://thunderstore.io/package/wildbook/Multitudes/) by **wildbook**, this is a complete re-implementation from the ground up. In addition to improved ease of use via difficulty selection, this mod takes the challenge one step further by introducing additional parameters to reduce advantages that come with an increased player count. After all, in a real multiplayer game, one would generally expect loot to be split among all players.
+Inspired by the original [*Multitudes*]() by **wildbook**, this is a complete re-implementation from the ground up. In addition to improved ease of use, this version takes the challenge one step further by introducing additional parameters to reduce advantages that come with an increased player count. After all, in a real multiplayer game, one would generally expect loot to be split among all players.
 
 ## Options
 
@@ -14,14 +14,15 @@ It is recommended that you install with [*r2modman*](https://thunderstore.io/pac
 
 | Title | Input | Description |
 | - | - | - |
-| Additional Player Count | *1 to 255* | Higher values increase difficulty. More enemies will spawn and purchase costs are increased. |
-| Eclipse Mode | *True/False* | Use eclipse modifiers. Not for the faint of heart. |
-| Additional Interactables | *Percent* | Increasing this percentage results in additional interactables (i.e. chests, shrines, & other loot), relative to player count. |
-| Extra Item Rewards | *True/False*  | Enable to drop additional items during the teleporter event and hidden realms. |
-| Income Penalty | *Percent* | Gold is typically split between all players. Lower this value to lessen this effect. |
-| Bonus Health | *Percent* | Certain enemies receive bonus health in multiplayer. Reduce the amount granted to teleporter bosses and the like. |
-| Teleporter Duration | *Percent* | The extent at which player count is considered when determining charge rate for holdout zones. Higher values result in slower charge. |
-| Force Enable | *True/False* | Force player count adjustment regardless of difficulty selection. For use with other custom difficulty modes. |
+| Additional Player Count | *1 to 255* | Add this many players to the game, increasing the difficulty of enemies. Also affects the other options listed below. |
+| Eclipse Mode | *True/False* | Use eclipse modifiers. Please note, this requires a restart in order to take effect. |
+| Additional Interactables | *Percent* | Increase this percentage for more loot (i.e. chests, shrines, etc.) on each stage, proportional to player count. |
+| Extra Item Rewards | *True/False*  | Enable to drop additional items from the teleporter event, other bosses, and hidden realms. |
+| Income Penalty | *Percent* | Gold is typically split between all players. Lower this value to lessen this effect, increasing player income. |
+| Bonus Health | *Percent* | Certain enemies receive bonus health in multiplayer. Reduce the amount granted to teleporter bosses and unique encounters. |
+| Teleporter Duration | *Percent* | The extent at which player count is considered when determining charge rate for holdout zones. Not recommended. |
+| Ignore Disconnected Players | *True/False* | By default, players that leave a multiplayer lobby are still taken into account, until they reconnect. |
+| Force Enable | *True/False* | For use with other difficulty options. Apply the increase to player count regardless of selection. |
 
 Note that values of **0**% result in identical behavior to a singleplayer game with respect to each parameter. By contrast, selecting **100**% will provide the full effect of *Additional Player Count*.
 

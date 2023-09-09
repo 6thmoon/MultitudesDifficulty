@@ -11,19 +11,21 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Security.Permissions;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using Resources = MultitudesDifficulty.Properties.Resources;
 
-[assembly: AssemblyVersion(Local.Difficulty.Multitudes.Setup.versionNumber)]
+[assembly: AssemblyVersion(Local.Difficulty.Multitudes.Setup.version)]
 #pragma warning disable CS0618
 [assembly: SecurityPermission(SecurityAction.RequestMinimum, SkipVerification = true)]
 #pragma warning restore CS0618
 
 namespace Local.Difficulty.Multitudes
 {
-	[BepInPlugin("local.difficulty.multitudes", "MultitudesDifficulty", versionNumber)]
+	[BepInPlugin(identifier, "MultitudesDifficulty", version)]
 	public class Setup : BaseUnityPlugin
 	{
-		public const string versionNumber = "0.4.1";
+		public const string identifier = "local.difficulty.multitudes";
+		public const string version = "0.4.2";
 
 		public static DifficultyIndex index;
 		public static Color theme;
@@ -32,7 +34,15 @@ namespace Local.Difficulty.Multitudes
 
 		public void Awake()
 		{
-			Settings.Load(Config);
+			Settings.Load(Config, out Session.eclipseMode);
+			SceneManager.sceneUnloaded += _ =>
+			{
+				Settings.Load(Config);
+				difficulty.descriptionToken = Settings.BuildDescription();
+
+				RuleChoiceDef choice = DifficultyRule.FindChoice(difficulty.nameToken);
+				if ( choice is object ) choice.tooltipBodyToken = difficulty.descriptionToken;
+			};
 
 			Color drizzle = ColorCatalog.GetColor(ColorCatalog.ColorIndex.EasyDifficulty);
 			theme = new Color(r: drizzle.r, g: drizzle.b, b: drizzle.g);
@@ -43,7 +53,7 @@ namespace Local.Difficulty.Multitudes
 						DifficultyCatalog.GetDifficultyDef(DifficultyIndex.Hard).scalingValue,
 					nameToken: "Multitudes",
 					iconPath: null,
-					descriptionToken: Settings.BuildDescription(verbose: true),
+					descriptionToken: null,
 					color: theme,
 					serverTag: RoR2ServerTags.mod,
 					countsAsHardMode: true
@@ -69,9 +79,11 @@ namespace Local.Difficulty.Multitudes
 		[HarmonyPrefix]
 		public static bool GetPlayerCount(out int __result)
 		{
-			__result = RoR2Application.isInMultiPlayer ?
+			__result = Session.lobbyPlayerCount && RoR2Application.isInMultiPlayer ?
 					PlatformSystems.lobbyManager.calculatedTotalPlayerCount :
-					PlayerCharacterMasterController.instances.Count;
+					PlayerCharacterMasterController.instances.Where(
+							( PlayerCharacterMasterController player ) => player.isConnected
+						).Count();
 
 			return false;
 		}

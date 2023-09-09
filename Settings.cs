@@ -1,99 +1,114 @@
 ﻿using BepInEx.Configuration;
 using RoR2;
+using System.IO;
 
 namespace Local.Difficulty.Multitudes
 {
 	public static class Settings
 	{
-		public static void Load(ConfigFile configuration)
+		public static void Load(ConfigFile configuration) => Load(configuration, out _);
+
+		public static void Load(ConfigFile configuration, out bool eclipse)
 		{
 			var percentage = new AcceptableValueRange<decimal>(0, 100);
 
-			string sectionTitle; int sectionNumber = 0;
-			void section(string title) => sectionTitle = ++sectionNumber + ". " + title;
+			int order = 0; string title;
+			void section(string name) => title = ++order + ". " + name;
+
+			try { configuration.Reload(); }
+			catch ( FileNotFoundException ) { configuration.Clear(); }
 
 			section("General");
 
-			ConfigEntry<byte> configEntry = configuration.Bind<byte>(
-					section: sectionTitle,
+			Session.additionalPlayers = configuration.Bind<byte>(
+					section: title,
 					key: "Additional Player Count",
 					defaultValue: 1,
-					description: "Higher values increase difficulty. More enemies will spawn"
-						+ " and purchase costs are increased."
-				);
+					description: "Add this many players to the game, increasing the difficulty"
+						+ " of enemies. Also affects the other options listed below."
+				).Value;
 
-			if ( configEntry.Value == 0 ) configEntry.Value = 1;
-			Session.additionalPlayers = configEntry.Value;
-
-			Session.eclipseMode = configuration.Bind(
-					section: sectionTitle,
+			eclipse = configuration.Bind(
+					section: title,
 					key: "Eclipse Mode",
 					defaultValue: false,
-					description: "Use eclipse modifiers. Not for the faint of heart."
+					description: "Use eclipse modifiers."
+						+ " Please note, this requires a restart in order to take effect."
 				).Value;
 
 			section("Advanced");
 
 			Session.interactableScale = configuration.Bind(
-					section: sectionTitle,
+					section: title,
 					key: "Additional Interactables",
 					defaultValue: 0m,
 					new ConfigDescription(
-						"Increasing this percentage results in additional interactables (i.e."
-							+ " chests, shrines, & other loot), relative to player count.",
+						"Increase this percentage for more loot (i.e. chests, shrines, etc.)"
+							+ " on each stage, proportional to player count.",
 						acceptableValues: percentage
 				)).Value / percentage.MaxValue;
 
 			Session.extraRewards = configuration.Bind(
-					section: sectionTitle,
+					section: title,
 					key: "Extra Item Rewards",
 					defaultValue: false,
-					description: "Enable to drop additional items during the teleporter event"
-						+ " and hidden realms."
+					description: "Enable to drop additional items from the teleporter event,"
+						+ " other bosses, and hidden realms."
 				).Value;
 
 			Session.incomePenalty = configuration.Bind(
-					section: sectionTitle,
+					section: title,
 					key: "Income Penalty",
 					defaultValue: 75m,
 					new ConfigDescription(
 						"Gold is typically split between all players. Lower this value to"
-							+ " lessen this effect.",
+							+ " lessen this effect, increasing player income.",
 						acceptableValues: percentage
 				)).Value / percentage.MaxValue;
 
 			Session.bonusHealth = configuration.Bind(
-					section: sectionTitle,
+					section: title,
 					key: "Bonus Health",
 					defaultValue: 0m,
 					new ConfigDescription(
-						"Certain enemies receive bonus health in multiplayer. Reduce the amount"
-							+ " granted to teleporter bosses and the like.",
+						"Certain enemies receive bonus health in multiplayer. Reduce the"
+							+ " amount granted to teleporter bosses and unique encounters.",
 						acceptableValues: percentage
 				)).Value / percentage.MaxValue;
 
 			Session.teleporterChargeRate = configuration.Bind(
-					section: sectionTitle,
+					section: title,
 					key: "Teleporter Duration",
 					defaultValue: 0m,
 					new ConfigDescription(
-						"The extent at which player count is considered when determining charge"
-							+ " rate for holdout zones. Higher values result in slower charge.",
+						"The extent at which player count is considered when determining"
+							+ " charge rate for holdout zones. Not recommended.",
 						acceptableValues: percentage
 				)).Value / percentage.MaxValue;
 
 			section("Other");
 
+			Session.lobbyPlayerCount = configuration.Bind(
+					section: title,
+					key: "Ignore Disconnected Players",
+					defaultValue: false,
+					description: "By default, players that leave a multiplayer lobby are still"
+						+ " taken into account, until they reconnect."
+				).Value is false;
+
 			Session.forceEnable = configuration.Bind(
-					section: sectionTitle,
+					section: title,
 					key: "Force Enable",
 					defaultValue: false,
-					description: "Force player count adjustment regardless of difficulty"
-						+ " selection. For use with other custom difficulty modes."
+					description: "For use with other difficulty options."
+						+ " Apply the increase to player count regardless of selection."
 				).Value;
+
+			if ( ! Session.forceEnable && Session.additionalPlayers == 0 )
+				Session.additionalPlayers = 1;
 		}
 
-		public static string BuildDescription(bool verbose = false)
+		public static string BuildDescription(bool verbose = true)
 		{
 			string description = "";
 			if ( verbose )
@@ -116,14 +131,11 @@ namespace Local.Difficulty.Multitudes
 								"<color=#" + equipment + ">Disabled</color>\n" ) +
 				"<style=cStack>>Player Income:</style> <style=cIsUtility>" +
 						"+" + FormatPercent(1 - Session.incomePenalty) + " </style>\n" +
-				"<style=cStack>>Enemy Bonus Health:</style> " +
-						"<style=cIsVoid>" + FormatPercent(value: Session.bonusHealth - 1,
-								"+" + FormatPercent(Session.additionalPlayers), "Off"
-						) + "</style>\n" +
+				"<style=cStack>>Enemy Bonus Health:</style> <style=cIsVoid>" +
+						FormatPercent(Session.bonusHealth - 1, "+100%", "Off") + "</style>\n" +
 				"<style=cStack>>Teleporter Duration:</style> <sprite name=\"TP\">" +
-						"<color=#" + lunar + ">+" + FormatPercent(
-								Session.teleporterChargeRate * Session.additionalPlayers
-						) + "</color>";
+						"<color=#" + lunar + ">+" +
+								FormatPercent(Session.teleporterChargeRate) + "</color>";
 		}
 
 		public static string FormatPercent(decimal value, string zero = null, string one = null)

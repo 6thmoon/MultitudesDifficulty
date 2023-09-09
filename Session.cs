@@ -20,6 +20,7 @@ namespace Local.Difficulty.Multitudes
 		public static decimal incomePenalty;
 		public static decimal bonusHealth;
 		public static decimal teleporterChargeRate;
+		public static bool lobbyPlayerCount;
 		public static bool forceEnable;
 
 		private static Harmony harmonyInstance = null;
