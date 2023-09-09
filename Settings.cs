@@ -1,6 +1,9 @@
 ﻿using BepInEx.Configuration;
+using HarmonyLib;
 using RoR2;
+using RoR2.UI;
 using System.IO;
+using UnityEngine;
 
 namespace Local.Difficulty.Multitudes
 {
@@ -106,6 +109,45 @@ namespace Local.Difficulty.Multitudes
 
 			if ( ! Session.forceEnable && Session.additionalPlayers == 0 )
 				Session.additionalPlayers = 1;
+		}
+
+		[HarmonyPatch(typeof(TimerText), nameof(TimerText.Awake))]
+		[HarmonyPatch(typeof(InfiniteTowerWaveCounter),
+				nameof(InfiniteTowerWaveCounter.OnEnable))]
+		[HarmonyPrefix]
+		private static void ShowPlayerCount(Component __instance)
+		{
+			const string name = "PlayerText";
+			Transform other = __instance.transform;
+
+			if ( __instance is InfiniteTowerWaveCounter )
+			{
+				if ( other.Find(name) is object ) return;
+				else other = other.Find("WaveText");
+			}
+
+			var text = new GameObject(name).AddComponent<HGTextMeshProUGUI>();
+
+			Transform transform = text.transform;
+			transform.SetParent(other.parent);
+
+			transform.localPosition = other.localPosition;
+			transform.localRotation = new Quaternion(0, -other.rotation.y * 0.25f, 0, 1);
+			transform.localScale = other.localScale;
+
+			RectTransform rectangle = text.rectTransform;
+
+			rectangle.anchorMax = Vector2.one;
+			rectangle.anchorMin = Vector2.zero;
+			rectangle.offsetMax = Vector2.zero;
+			rectangle.offsetMin = new Vector2(-1.5f, -1);
+
+			text.alignment = TMPro.TextAlignmentOptions.BottomLeft;
+			text.fontSize = 12;
+			text.faceColor = Setup.theme;
+			text.outlineWidth = 0.125f;
+
+			text.SetText(Run.instance.participatingPlayerCount + "P");
 		}
 
 		public static string BuildDescription(bool verbose = true)

@@ -34,20 +34,21 @@ Please report any feedback or issues discovered [here](https://github.com/6thmoo
 
 ## Version History
 
+#### `0.4.2`
+- Reload configuration file upon entering the lobby or continuing to the next stage (restart not required).
+- Add player count indicator to the user interface.
+
 #### `0.4.1`
-- Fix issue present in base game that could result in incorrect player count when transitioning from *Multiplayer* to *Singleplayer* lobby.
+- Fix issue present in the original game that results in incorrect player count after leaving a multiplayer game.
 
 #### `0.4.0`
 - Add option to limit penalties to player income and boss health.
 
-#### `0.3.5`
-- Update dependencies.
-
-#### `0.3.4`
-- Fix compatibility issue with plugins that utilize *R2API* submodule *DifficultyAPI*.
+#### `0.3.4`, `0.3.5`
+- Update for **R2API** compatibility.
 
 #### `0.3.3`
-- *Teleporter Duration* parameter no longer applies to zones that would otherwise be unaffected by player count. Increase escape sequence duration proportionally to ensure sufficient time is always available.
+- Address a couple of inconsistencies with holdout zones on the final stage.
 
 #### `0.3.2` ***- Initial Release***
-- Support for both singleplayer and multiplayer lobbies. Only the host needs to have this mod installed.
+- Support for both singleplayer and multiplayer lobbies. Only the host needs to have this installed.

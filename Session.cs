@@ -23,14 +23,15 @@ namespace Local.Difficulty.Multitudes
 		public static bool lobbyPlayerCount;
 		public static bool forceEnable;
 
-		private static Harmony harmonyInstance = null;
+		private static Harmony instance = null;
 
 		public static void Begin(Run thisRun)
 		{
-			if ( harmonyInstance is null && NetworkServer.active &&
+			if ( instance is null && NetworkServer.active &&
 					( thisRun.selectedDifficulty == Setup.index || forceEnable ))
 			{
-				harmonyInstance = Harmony.CreateAndPatchAll(typeof(Session));
+				instance = Harmony.CreateAndPatchAll(typeof(Session));
+				instance.PatchAll(typeof(Settings));
 
 				SceneDirector.onPrePopulateSceneServer += AdjustInteractableCredits;
 				BossGroup.onBossGroupStartServer += AdjustBossRewards;
@@ -42,8 +43,8 @@ namespace Local.Difficulty.Multitudes
 			SceneDirector.onPrePopulateSceneServer -= AdjustInteractableCredits;
 			BossGroup.onBossGroupStartServer -= AdjustBossRewards;
 
-			harmonyInstance?.UnpatchSelf();
-			harmonyInstance = null;
+			instance?.UnpatchSelf();
+			instance = null;
 		}
 
 		[HarmonyPatch(typeof(SurvivorPodController), 
