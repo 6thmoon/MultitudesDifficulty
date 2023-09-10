@@ -31,10 +31,11 @@ namespace Local.Difficulty.Multitudes
 		public static Color theme;
 
 		private static DifficultyDef difficulty;
+		public static bool eclipseMode, lobbyPlayerCount, forceEnable;
 
 		public void Awake()
 		{
-			Settings.Load(Config, out Session.eclipseMode);
+			Settings.Load(Config, out eclipseMode);
 			SceneManager.sceneUnloaded += _ =>
 			{
 				Settings.Load(Config);
@@ -47,7 +48,7 @@ namespace Local.Difficulty.Multitudes
 			Color drizzle = ColorCatalog.GetColor(ColorCatalog.ColorIndex.EasyDifficulty);
 			theme = new Color(r: drizzle.r, g: drizzle.b, b: drizzle.g);
 
-			index = (DifficultyIndex)( Session.eclipseMode ? sbyte.MaxValue : sbyte.MinValue );
+			index = (DifficultyIndex)( eclipseMode ? sbyte.MaxValue : sbyte.MinValue );
 			difficulty = new DifficultyDef(
 					scalingValue: 
 						DifficultyCatalog.GetDifficultyDef(DifficultyIndex.Hard).scalingValue,
@@ -61,14 +62,14 @@ namespace Local.Difficulty.Multitudes
 
 			Texture2D texture = new Texture2D(0, 0);
 			difficulty.foundIconSprite = ImageConversion.LoadImage(
-					texture, Session.eclipseMode ? Resources.eclipse : Resources.icon
+					texture, eclipseMode ? Resources.eclipse : Resources.icon
 				);
 			difficulty.iconSprite = Sprite.Create(
 					texture, new Rect(0, 0, texture.width, texture.height),
 					pivot: new Vector2(texture.width / 2, texture.height / 2)
 				);
 
-			if ( ! Session.forceEnable )
+			if ( ! forceEnable )
 				Harmony.CreateAndPatchAll(typeof(Setup));
 
 			Run.onRunStartGlobal += Session.Begin;
@@ -79,11 +80,12 @@ namespace Local.Difficulty.Multitudes
 		[HarmonyPrefix]
 		public static bool GetPlayerCount(out int __result)
 		{
-			__result = Session.lobbyPlayerCount && RoR2Application.isInMultiPlayer ?
-					PlatformSystems.lobbyManager.calculatedTotalPlayerCount :
-					PlayerCharacterMasterController.instances.Where(
-							( PlayerCharacterMasterController player ) => player.isConnected
-						).Count();
+			__result = PlayerCharacterMasterController.instances.Where(
+					player => player.isConnected ).Count();
+
+			int lobby = PlatformSystems.lobbyManager.calculatedTotalPlayerCount;
+			if ( lobbyPlayerCount && RoR2Application.isInMultiPlayer && __result < lobby )
+				__result = lobby;
 
 			return false;
 		}
@@ -141,7 +143,7 @@ namespace Local.Difficulty.Multitudes
 			return true;
 		}
 
-		private static DifficultyIndex BaseDifficulty => Session.eclipseMode ?
+		private static DifficultyIndex BaseDifficulty => eclipseMode ?
 				DifficultyIndex.Eclipse8 : DifficultyIndex.Hard;
 
 		[HarmonyPatch(typeof(NetworkExtensions), nameof(NetworkExtensions.Write),

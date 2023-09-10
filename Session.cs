@@ -14,21 +14,19 @@ namespace Local.Difficulty.Multitudes
 	public static class Session
 	{
 		public static byte additionalPlayers;
-		public static bool eclipseMode;
 		public static decimal interactableScale;
 		public static bool extraRewards;
 		public static decimal incomePenalty;
 		public static decimal bonusHealth;
 		public static decimal teleporterChargeRate;
-		public static bool lobbyPlayerCount;
-		public static bool forceEnable;
 
 		private static Harmony instance = null;
+		private static bool broadcast = false;
 
 		public static void Begin(Run thisRun)
 		{
 			if ( instance is null && NetworkServer.active &&
-					( thisRun.selectedDifficulty == Setup.index || forceEnable ))
+					( Setup.forceEnable || thisRun.selectedDifficulty == Setup.index ))
 			{
 				instance = Harmony.CreateAndPatchAll(typeof(Session));
 				instance.PatchAll(typeof(Settings));
@@ -43,6 +41,8 @@ namespace Local.Difficulty.Multitudes
 			SceneDirector.onPrePopulateSceneServer -= AdjustInteractableCredits;
 			BossGroup.onBossGroupStartServer -= AdjustBossRewards;
 
+			broadcast = false;
+
 			instance?.UnpatchSelf();
 			instance = null;
 		}
@@ -50,9 +50,12 @@ namespace Local.Difficulty.Multitudes
 		[HarmonyPatch(typeof(SurvivorPodController), 
 				nameof(SurvivorPodController.OnPassengerExit))]
 		[HarmonyPatch(typeof(Acrid.WakeUp),	nameof(Acrid.WakeUp.OnExit))]	// Unique case.
+		[HarmonyPatch(typeof(InfiniteTowerRun), nameof(InfiniteTowerRun.OnSafeWardActivated))]
 		[HarmonyPostfix]
 		private static void GreetUser()
 		{
+			if ( broadcast ) return;
+
 			void sendMessage(string message) =>
 				Chat.SendBroadcastChat(new Chat.SimpleChatMessage {
 						baseToken = "<color=#"
@@ -60,18 +63,12 @@ namespace Local.Difficulty.Multitudes
 							+ ">" + message + "</color>"
 					});
 
-			if ( RoR2Application.isInMultiPlayer || forceEnable )
+			if ( Setup.forceEnable || RoR2Application.isInMultiPlayer )
 				sendMessage(Settings.BuildDescription(verbose: false));
-			else if ( eclipseMode )
+			else if ( Setup.eclipseMode )
 				sendMessage("Good luck.");
-		}
 
-		[HarmonyPatch(typeof(InfiniteTowerRun), nameof(InfiniteTowerRun.OnSafeWardActivated))]
-		[HarmonyPostfix]
-		private static void SimilacrumBegin(InfiniteTowerRun __instance)
-		{
-			if ( __instance.waveIndex <= 1 )
-				GreetUser();
+			broadcast = true;
 		}
 
 		[HarmonyPatch(typeof(Run), nameof(Run.participatingPlayerCount), MethodType.Getter)]

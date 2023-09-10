@@ -91,7 +91,7 @@ namespace Local.Difficulty.Multitudes
 
 			section("Other");
 
-			Session.lobbyPlayerCount = configuration.Bind(
+			Setup.lobbyPlayerCount = configuration.Bind(
 					section: title,
 					key: "Ignore Disconnected Players",
 					defaultValue: false,
@@ -99,7 +99,7 @@ namespace Local.Difficulty.Multitudes
 						+ " taken into account, until they reconnect."
 				).Value is false;
 
-			Session.forceEnable = configuration.Bind(
+			Setup.forceEnable = configuration.Bind(
 					section: title,
 					key: "Force Enable",
 					defaultValue: false,
@@ -107,7 +107,7 @@ namespace Local.Difficulty.Multitudes
 						+ " Apply the increase to player count regardless of selection."
 				).Value;
 
-			if ( ! Session.forceEnable && Session.additionalPlayers == 0 )
+			if ( ! Setup.forceEnable && Session.additionalPlayers == 0 )
 				Session.additionalPlayers = 1;
 		}
 
@@ -158,7 +158,7 @@ namespace Local.Difficulty.Multitudes
 				description = "For those who wish to face vast hordes of enemies alone. " +
 							"Multiplayer difficulty levels are in effect.\n\n" +
 					"<style=cStack>>Base Difficulty:</style> <style=cSub>" +
-							( Session.eclipseMode ? "Eclipse" : "Monsoon" ) + "</style>\n";
+							( Setup.eclipseMode ? "Eclipse" : "Monsoon" ) + "</style>\n";
 			}
 
 			string lunar = ColorCatalog.GetColorHexString(ColorCatalog.ColorIndex.LunarItem),
