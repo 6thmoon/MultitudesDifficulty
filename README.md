@@ -34,12 +34,15 @@ Please report any feedback or issues discovered [here](https://github.com/6thmoo
 
 ## Version History
 
+#### `0.4.3`
+- Implement configuration entry for disconnected players in multiplayer.
+
 #### `0.4.2`
 - Reload configuration file upon entering the lobby or continuing to the next stage (restart not required).
 - Add player count indicator to the user interface.
 
 #### `0.4.1`
-- Fix issue present in the original game that results in incorrect player count after leaving a multiplayer game.
+- Fix issue present in the original game that results in incorrect player count after leaving a multiplayer lobby.
 
 #### `0.4.0`
 - Add option to limit penalties to player income and boss health.
@@ -50,5 +53,4 @@ Please report any feedback or issues discovered [here](https://github.com/6thmoo
 #### `0.3.3`
 - Address a couple of inconsistencies with holdout zones on the final stage.
 
-#### `0.3.2` ***- Initial Release***
-- Support for both singleplayer and multiplayer lobbies. Only the host needs to have this installed.
+#### `0.3.2` **- Initial Release**

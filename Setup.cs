@@ -25,7 +25,7 @@ namespace Local.Difficulty.Multitudes
 	public class Setup : BaseUnityPlugin
 	{
 		public const string identifier = "local.difficulty.multitudes";
-		public const string version = "0.4.2";
+		public const string version = "0.4.3";
 
 		public static DifficultyIndex index;
 		public static Color theme;
@@ -80,12 +80,9 @@ namespace Local.Difficulty.Multitudes
 		[HarmonyPrefix]
 		public static bool GetPlayerCount(out int __result)
 		{
-			__result = PlayerCharacterMasterController.instances.Where(
-					player => player.isConnected ).Count();
-
-			int lobby = PlatformSystems.lobbyManager.calculatedTotalPlayerCount;
-			if ( lobbyPlayerCount && RoR2Application.isInMultiPlayer && __result < lobby )
-				__result = lobby;
+			var players = PlayerCharacterMasterController.instances;
+			__result = lobbyPlayerCount ? players.Count :
+					players.Where( player => player.isConnected ).Count();
 
 			return false;
 		}
