@@ -6,7 +6,7 @@ At its core, this plugin simply increases the game's internal player count. By l
 
 ![](https://github.com/6thmoon/MultitudesDifficulty/blob/v0.4.1/Resources/screenshot.png?raw=true)
 
-Inspired by the original [*Multitudes*]() by **wildbook**, this is a complete re-implementation from the ground up. In addition to improved ease of use, this version takes the challenge one step further by introducing additional parameters to reduce advantages that come with an increased player count. After all, in a real multiplayer game, one would generally expect loot to be split among all players.
+Inspired by the original [*Multitudes*](https://thunderstore.io/package/wildbook/Multitudes/) by **wildbook**, this is a complete re-implementation from the ground up. In addition to improved ease of use, this version takes the challenge one step further by introducing additional parameters to reduce advantages that come with an increased player count. After all, in a real multiplayer game, one would generally expect loot to be split among all players.
 
 ## Options
 
