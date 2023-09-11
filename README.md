@@ -14,7 +14,7 @@ It is recommended that you install with [*r2modman*](https://thunderstore.io/pac
 
 | Title | Input | Description |
 | - | - | - |
-| Additional Player Count | *1 to 255* | Add this many players to the game, increasing the difficulty of enemies. Also affects the other options listed below. |
+| Additional Player Count | *½ to 250* | Add this many players to the game, increasing the difficulty of enemies. Also affects the other options listed below. |
 | Eclipse Mode | *True/False* | Use eclipse modifiers. Please note, this requires a restart in order to take effect. |
 | Additional Interactables | *Percent* | Increase this percentage for more loot (i.e. chests, shrines, etc.) on each stage, proportional to player count. |
 | Extra Item Rewards | *True/False*  | Enable to drop additional items from the teleporter event, other bosses, and hidden realms. |
@@ -30,12 +30,13 @@ Note that values of **0**% result in identical behavior to a singleplayer game w
 
 - In multiplayer, clients may notice inaccurate information presented in the user interface regarding difficulty level. This is purely visual and should not affect gameplay nor the host.
 
-Please report any feedback or issues discovered [here](https://github.com/6thmoon/MultitudesDifficulty/issues). Feel free to check out my [other](https://thunderstore.io/package/6thmoon/?ordering=top-rated) released content too.
+Please report any feedback or issues discovered [here](https://github.com/6thmoon/MultitudesDifficulty/issues). Feel free to check out my [other](https://thunderstore.io/package/6thmoon/?ordering=top-rated) work as well.
 
 ## Version History
 
-#### `0.4.3`
-- Implement configuration entry for disconnected players in multiplayer.
+#### `0.5.0`
+- Now supports fractional values for player count increase.
+- Implement option for disconnected players in multiplayer.
 
 #### `0.4.2`
 - Reload configuration file upon entering the lobby or continuing to the next stage (restart not required).

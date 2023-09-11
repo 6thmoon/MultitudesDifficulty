@@ -13,12 +13,9 @@ namespace Local.Difficulty.Multitudes
 {
 	public static class Session
 	{
-		public static byte additionalPlayers;
-		public static decimal interactableScale;
+		public static decimal additionalPlayers, interactableScale;
 		public static bool extraRewards;
-		public static decimal incomePenalty;
-		public static decimal bonusHealth;
-		public static decimal teleporterChargeRate;
+		public static decimal incomePenalty, bonusHealth, teleporterChargeRate;
 
 		private static Harmony instance = null;
 		private static bool broadcast = false;
@@ -74,18 +71,19 @@ namespace Local.Difficulty.Multitudes
 		[HarmonyPatch(typeof(Run), nameof(Run.participatingPlayerCount), MethodType.Getter)]
 		[HarmonyPostfix]
 		private static int AdjustPlayerCount(int playerCount)
-				=> playerCount > 0 ? playerCount + additionalPlayers : playerCount;
+				=> playerCount > 0 ? playerCount + (int) additionalPlayers : playerCount;
 
 //		[HarmonyPatch(typeof(SceneDirector), nameof(SceneDirector.PopulateScene))]
 //		[HarmonyPrefix]
 		private static void AdjustInteractableCredits(SceneDirector __instance)
 		{
-			int bonus = ClassicStageInfo.instance?.bonusInteractibleCreditObjects?.Where(
+			ClassicStageInfo stage = ClassicStageInfo.instance;
+			int stageBonus = stage?.bonusInteractibleCreditObjects?.Where(
 					obj => obj.objectThatGrantsPointsIfEnabled?.activeSelf is true
 				).Sum( obj => obj.points ) ?? 0;
 
-			decimal extraCredits = ( __instance.interactableCredit - bonus ) *
-					additionalPlayers / (decimal)( Run.instance.participatingPlayerCount + 1 );
+			decimal extraCredits = ( __instance.interactableCredit - stageBonus ) *
+					Math.Floor(additionalPlayers) / ( Run.instance.participatingPlayerCount + 1 );
 
 			SceneDef currentScene = SceneInfo.instance?.sceneDef;
 			string sceneName = currentScene?.baseSceneName;
@@ -93,14 +91,19 @@ namespace Local.Difficulty.Multitudes
 					currentScene?.sceneType == SceneType.Intermission;
 
 			if ( hiddenRealms && ! extraRewards )
-				Console.WriteLine("Prevent extra interactables in hidden realms.");
-			else extraCredits *= 1 - interactableScale;
+				Console.WriteLine("Prevent extra items in hidden realms.");
+			else
+			{
+				extraCredits *= 1 - interactableScale;
+				extraCredits -= interactableScale * ( additionalPlayers % 1 ) / 2
+						* stage?.sceneDirectorInteractibleCredits ?? 0;
+			}
+
 			extraCredits = Math.Round(extraCredits, MidpointRounding.AwayFromZero);
-
 			__instance.interactableCredit -= (int) extraCredits;
-			Console.WriteLine($"...removed { extraCredits } credits.");
 
-			Run.instance.RecalculateDifficultyCoefficent();     // Fix initial purchase cost.
+			Console.WriteLine($"...removed { extraCredits } credits.");
+			Run.instance.RecalculateDifficultyCoefficent();
 		}
 
 //		[HarmonyPatch(typeof(BossGroup), nameof(BossGroup.DropRewards))]
@@ -130,7 +133,7 @@ namespace Local.Difficulty.Multitudes
 		private static void AdjustPlayerIncome(ref uint money)
 		{
 			decimal extraIncome = money * additionalPlayers;
-			extraIncome /= Run.instance.participatingPlayerCount;
+			extraIncome /= Run.instance.participatingPlayerCount + additionalPlayers % 1;
 
 			money -= (uint)( incomePenalty * extraIncome );
 		}
@@ -169,20 +172,20 @@ namespace Local.Difficulty.Multitudes
 			{
 				if ( result.success && result.spawnedInstance )
 				{
-					const double itemBonus = 0.1;
-					double health = 0;
+					const double item = 0.1;
+					double health = 0, increase = (double) additionalPlayers;
 
 					if ( instance is CombatDirector director && director.combatSquad &&
 							director.combatSquad.grantBonusHealthInMultiplayer )
 					{
 						health = elite ? elite.healthBoostCoefficient : 1;
-						health *= additionalPlayers;
+						health *= increase;
 					}
 					else if ( instance is ScriptedCombatEncounter encounter &&
 							encounter.grantUniqueBonusScaling )
 					{
 						health = Run.instance.difficultyCoefficient * 2 / 5;
-						health *= Math.Sqrt(Run.instance.livingPlayerCount + additionalPlayers)
+						health *= Math.Sqrt(Run.instance.livingPlayerCount + increase)
 								- Math.Sqrt(Run.instance.livingPlayerCount);
 					}
 					else return;
@@ -191,7 +194,7 @@ namespace Local.Difficulty.Multitudes
 					Console.WriteLine($"Applying " + health.ToString("0.#%") + " additional"
 							+ " bonus health to '" + result.spawnedInstance.name + "'...");
 
-					health = Math.Round(health / itemBonus, MidpointRounding.AwayFromZero);
+					health = Math.Round(health / item, MidpointRounding.AwayFromZero);
 					result.spawnedInstance.GetComponent<Inventory>()?.GiveItem(
 							RoR2Content.Items.BoostHp, (int) health
 						);
@@ -222,8 +225,38 @@ namespace Local.Difficulty.Multitudes
 		[HarmonyPrefix]
 		private static void IncreaseCountdown(EscapeSequenceController __instance)
 		{
-			__instance.countdownDuration *= (float)( 1 + 
+			__instance.countdownDuration *= (float)( 1 +
 					teleporterChargeRate * additionalPlayers );
+		}
+
+		[HarmonyPatch(typeof(CombatDirector), nameof(CombatDirector.Awake))]
+		[HarmonyPostfix]
+		private static void IncreaseEnemyCredit(CombatDirector __instance)
+		{
+			__instance.creditMultiplier *= 1 + (float)( additionalPlayers % 1 ) /
+					( Run.instance.participatingPlayerCount + 1 );
+		}
+
+		private static readonly MethodInfo getPlayerCount =
+				typeof(Run).GetProperty(nameof(Run.participatingPlayerCount)).GetMethod;
+
+		[HarmonyPatch(typeof(Run), nameof(Run.RecalculateDifficultyCoefficentInternal))]
+		[HarmonyTranspiler]
+		private static IEnumerable<CodeInstruction>
+				IncreaseDifficultyCoefficient(IEnumerable<CodeInstruction> instructionList)
+		{
+			CodeInstruction previous = null;
+			foreach ( CodeInstruction instruction in instructionList )
+			{
+				if ( instruction.opcode == OpCodes.Conv_R4 && previous.Calls(getPlayerCount) )
+				{
+					yield return Transpilers.EmitDelegate<Func<int, float>>(( int playerCount )
+							=> (float)( playerCount + additionalPlayers % 1 ));
+				}
+				else yield return instruction;
+
+				previous = instruction;
+			}
 		}
 
 		[HarmonyPatch(typeof(ArenaMissionController), nameof(ArenaMissionController.EndRound))]
@@ -233,9 +266,6 @@ namespace Local.Difficulty.Multitudes
 		private static IEnumerable<CodeInstruction>
 				IgnorePlayerAdjustment(IEnumerable<CodeInstruction> instructionList)
 		{
-			MethodInfo getPlayerCount =
-					typeof(Run).GetProperty(nameof(Run.participatingPlayerCount)).GetMethod;
-
 			foreach ( CodeInstruction instruction in instructionList )
 			{
 				if ( instruction.Calls(getPlayerCount) && ! extraRewards )

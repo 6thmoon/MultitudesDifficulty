@@ -2,6 +2,7 @@
 using HarmonyLib;
 using RoR2;
 using RoR2.UI;
+using System;
 using System.IO;
 using UnityEngine;
 
@@ -23,13 +24,15 @@ namespace Local.Difficulty.Multitudes
 
 			section("General");
 
-			Session.additionalPlayers = configuration.Bind<byte>(
+			Session.additionalPlayers = configuration.Bind(
 					section: title,
 					key: "Additional Player Count",
-					defaultValue: 1,
-					description: "Add this many players to the game, increasing the difficulty"
-						+ " of enemies. Also affects the other options listed below."
-				).Value;
+					defaultValue: 1m,
+					new ConfigDescription(
+						"Add this many players to the game, increasing the difficulty"
+							+ " of enemies. Also affects the other options listed below.",
+						acceptableValues: new AcceptableValueRange<decimal>(0.5m, 250)
+				)).Value;
 
 			eclipse = configuration.Bind(
 					section: title,
@@ -106,9 +109,6 @@ namespace Local.Difficulty.Multitudes
 					description: "For use with other difficulty options."
 						+ " Apply the increase to player count regardless of selection."
 				).Value;
-
-			if ( ! Setup.forceEnable && Session.additionalPlayers == 0 )
-				Session.additionalPlayers = 1;
 		}
 
 		[HarmonyPatch(typeof(TimerText), nameof(TimerText.Awake))]
@@ -147,7 +147,10 @@ namespace Local.Difficulty.Multitudes
 			text.faceColor = Setup.theme;
 			text.outlineWidth = 0.125f;
 
-			text.SetText(Run.instance.participatingPlayerCount + "P");
+			string value = $"{ Run.instance.participatingPlayerCount }";
+			if ( Session.additionalPlayers % 1 > 0 ) value += "½";
+
+			text.SetText(value + "P");
 		}
 
 		public static string BuildDescription(bool verbose = true)
@@ -165,7 +168,8 @@ namespace Local.Difficulty.Multitudes
 				  equipment = ColorCatalog.GetColorHexString(ColorCatalog.ColorIndex.Equipment);
 
 			return description + "<style=cStack>>Player Count:</style> " +
-						$"<style=cDeath>+{ Session.additionalPlayers }</style>\n" +
+						"<style=cDeath>+" + Math.Floor(Session.additionalPlayers) + (
+								Session.additionalPlayers % 1 > 0 ? "½" : "" ) + "</style>\n" +
 				"<style=cStack>>Additional Interactables:</style> <style=cShrine>" +
 						FormatPercent(Session.interactableScale, "None") + "</style>\n" +
 				"<style=cStack>>Extra Item Rewards:</style> " +
