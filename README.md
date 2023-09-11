@@ -4,7 +4,7 @@ Looking for a challenge beyond what the standard game modes have to offer? Ever 
 
 At its core, this plugin simply increases the game's internal player count. By leveraging existing functionality to scale up difficulty for multiplayer, we can introduce a harder option while retaining a mostly "vanilla" feel. Enemies will level up faster, and initial spawn rates are also higher - which helps keep the game exciting early on.
 
-![](https://github.com/6thmoon/MultitudesDifficulty/blob/v0.4.1/Resources/screenshot.png?raw=true)
+![](https://github.com/6thmoon/MultitudesDifficulty/blob/v0.5.0/Resources/screenshot.png?raw=true)
 
 Inspired by the original [*Multitudes*](https://thunderstore.io/package/wildbook/Multitudes/) by **wildbook**, this is a complete re-implementation from the ground up. In addition to improved ease of use, this version takes the challenge one step further by introducing additional parameters to reduce advantages that come with an increased player count. After all, in a real multiplayer game, one would generally expect loot to be split among all players.
 
@@ -14,7 +14,7 @@ It is recommended that you install with [*r2modman*](https://thunderstore.io/pac
 
 | Title | Input | Description |
 | - | - | - |
-| Additional Player Count | *½ to 250* | Add this many players to the game, increasing the difficulty of enemies. Also affects the other options listed below. |
+| Additional Player Count | *¼ to 250* | Add this many players to the game, increasing the difficulty of enemies. Also affects the other options listed below. |
 | Eclipse Mode | *True/False* | Use eclipse modifiers. Please note, this requires a restart in order to take effect. |
 | Additional Interactables | *Percent* | Increase this percentage for more loot (i.e. chests, shrines, etc.) on each stage, proportional to player count. |
 | Extra Item Rewards | *True/False*  | Enable to drop additional items from the teleporter event, other bosses, and hidden realms. |

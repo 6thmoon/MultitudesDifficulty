@@ -229,18 +229,12 @@ namespace Local.Difficulty.Multitudes
 					teleporterChargeRate * additionalPlayers );
 		}
 
-		[HarmonyPatch(typeof(CombatDirector), nameof(CombatDirector.Awake))]
-		[HarmonyPostfix]
-		private static void IncreaseEnemyCredit(CombatDirector __instance)
-		{
-			__instance.creditMultiplier *= 1 + (float)( additionalPlayers % 1 ) /
-					( Run.instance.participatingPlayerCount + 1 );
-		}
-
 		private static readonly MethodInfo getPlayerCount =
 				typeof(Run).GetProperty(nameof(Run.participatingPlayerCount)).GetMethod;
 
 		[HarmonyPatch(typeof(Run), nameof(Run.RecalculateDifficultyCoefficentInternal))]
+		[HarmonyPatch(typeof(CombatDirector.DirectorMoneyWave),
+				nameof(CombatDirector.DirectorMoneyWave.Update))]
 		[HarmonyTranspiler]
 		private static IEnumerable<CodeInstruction>
 				IncreaseDifficultyCoefficient(IEnumerable<CodeInstruction> instructionList)
@@ -268,14 +262,17 @@ namespace Local.Difficulty.Multitudes
 		{
 			foreach ( CodeInstruction instruction in instructionList )
 			{
-				if ( instruction.Calls(getPlayerCount) && ! extraRewards )
+				yield return instruction;
+
+				if ( instruction.Calls(getPlayerCount) )
 				{
-					yield return Transpilers.EmitDelegate<Func<Run, int>>(( _ ) => {
-							Setup.GetPlayerCount(out int playerCount);
+					yield return Transpilers.EmitDelegate<Func<int, int>>(
+						( int playerCount ) =>
+						{
+							if ( ! extraRewards ) Setup.GetPlayerCount(out playerCount);
 							return playerCount;
 						});
 				}
-				else yield return instruction;
 			}
 		}
 	}

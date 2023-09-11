@@ -31,7 +31,7 @@ namespace Local.Difficulty.Multitudes
 					new ConfigDescription(
 						"Add this many players to the game, increasing the difficulty"
 							+ " of enemies. Also affects the other options listed below.",
-						acceptableValues: new AcceptableValueRange<decimal>(0.5m, 250)
+						acceptableValues: new AcceptableValueRange<decimal>(0.25m, 250)
 				)).Value;
 
 			eclipse = configuration.Bind(
@@ -147,10 +147,8 @@ namespace Local.Difficulty.Multitudes
 			text.faceColor = Setup.theme;
 			text.outlineWidth = 0.125f;
 
-			string value = $"{ Run.instance.participatingPlayerCount }";
-			if ( Session.additionalPlayers % 1 > 0 ) value += "½";
-
-			text.SetText(value + "P");
+			int playerCount = Run.instance?.participatingPlayerCount ?? 0;
+			text.SetText(FormatFraction(Session.additionalPlayers % 1 + playerCount) + "P");
 		}
 
 		public static string BuildDescription(bool verbose = true)
@@ -167,9 +165,8 @@ namespace Local.Difficulty.Multitudes
 			string lunar = ColorCatalog.GetColorHexString(ColorCatalog.ColorIndex.LunarItem),
 				  equipment = ColorCatalog.GetColorHexString(ColorCatalog.ColorIndex.Equipment);
 
-			return description + "<style=cStack>>Player Count:</style> " +
-						"<style=cDeath>+" + Math.Floor(Session.additionalPlayers) + (
-								Session.additionalPlayers % 1 > 0 ? "½" : "" ) + "</style>\n" +
+			return description + "<style=cStack>>Player Count:</style> <style=cDeath>" +
+						"+" + FormatFraction(Session.additionalPlayers) + "</style>\n" +
 				"<style=cStack>>Additional Interactables:</style> <style=cShrine>" +
 						FormatPercent(Session.interactableScale, "None") + "</style>\n" +
 				"<style=cStack>>Extra Item Rewards:</style> " +
@@ -179,9 +176,27 @@ namespace Local.Difficulty.Multitudes
 						"+" + FormatPercent(1 - Session.incomePenalty) + " </style>\n" +
 				"<style=cStack>>Enemy Bonus Health:</style> <style=cIsVoid>" +
 						FormatPercent(Session.bonusHealth - 1, "+100%", "Off") + "</style>\n" +
-				"<style=cStack>>Teleporter Duration:</style> <sprite name=\"TP\">" +
-						"<color=#" + lunar + ">+" +
-								FormatPercent(Session.teleporterChargeRate) + "</color>";
+				"<style=cStack>>Teleporter Duration:</style> <sprite name=\"TP\"><color=#" +
+						lunar + ">+" + FormatPercent(Session.teleporterChargeRate) + "</color>";
+		}
+
+		private static string FormatFraction(decimal value)
+		{
+			decimal integer = Math.Truncate(value), fraction = Math.Abs(value % 1);
+			string result = "½";
+
+			if ( fraction == 0 )
+			{
+				if ( integer == 0 )
+					return "0";
+				else result = "";
+			}
+			else if ( fraction < 0.375m )
+				result = "¼";
+			else if ( fraction > 0.625m )
+				result = "¾";
+
+			return integer != 0 ? integer + result : result;
 		}
 
 		public static string FormatPercent(decimal value, string zero = null, string one = null)
