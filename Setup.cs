@@ -26,12 +26,14 @@ namespace Local.Difficulty.Multitudes;
 public class Setup : BaseUnityPlugin
 {
 	public const string identifier = "local.difficulty.multitudes";
-	public const string version = "0.5.0";
+	public const string version = "0.5.1";
 
 	public static DifficultyIndex index;
 	public static Color theme;
 
 	private static DifficultyDef difficulty;
+	private static RuleChoiceDef other, choice;
+
 	public static bool eclipseMode, lobbyPlayerCount, forceEnable;
 
 	public void Awake()
@@ -40,10 +42,9 @@ public class Setup : BaseUnityPlugin
 		SceneManager.sceneUnloaded += _ =>
 		{
 			Settings.Load(Config);
-			difficulty.descriptionToken = Settings.BuildDescription();
 
-			RuleChoiceDef choice = DifficultyRule.FindChoice(difficulty.nameToken);
-			if ( choice is not null ) choice.tooltipBodyToken = difficulty.descriptionToken;
+			choice.tooltipBodyToken = difficulty.descriptionToken = Settings.BuildDescription();
+			choice.excludeByDefault = forceEnable;
 		};
 
 		Color drizzle = ColorCatalog.GetColor(ColorCatalog.ColorIndex.EasyDifficulty);
@@ -51,27 +52,20 @@ public class Setup : BaseUnityPlugin
 
 		index = (DifficultyIndex)( eclipseMode ? sbyte.MaxValue : sbyte.MinValue );
 		difficulty = new DifficultyDef(
-				scalingValue:
-						DifficultyCatalog.GetDifficultyDef(DifficultyIndex.Hard).scalingValue,
-				nameToken: "Multitudes",
-				iconPath: null,
-				descriptionToken: null,
-				color: theme,
-				serverTag: RoR2ServerTags.mod,
-				countsAsHardMode: true
+				DifficultyCatalog.GetDifficultyDef(DifficultyIndex.Hard).scalingValue,
+				nameToken: "Multitudes", iconPath: null, descriptionToken: null,
+				color: theme, serverTag: RoR2ServerTags.mod, countsAsHardMode: true
 			);
 
-		Texture2D texture = new(0, 0);
+		const int size = 256, scale = 2;
+		Texture2D texture = new(size, size, TextureFormat.ARGB32, scale + 1, linear: false);
 
 		difficulty.foundIconSprite = ImageConversion.LoadImage(
 				texture, eclipseMode ? Resources.eclipse : Resources.icon);
 		difficulty.iconSprite = Sprite.Create(
-				texture, new Rect(0, 0, texture.width, texture.height),
-				pivot: new Vector2(texture.width / 2, texture.height / 2)
-			);
+				texture, new Rect(0, 0, texture.width, texture.height), Vector2.zero);
 
-		if ( ! forceEnable )
-			Harmony.CreateAndPatchAll(typeof(Setup));
+		Harmony.CreateAndPatchAll(typeof(Setup));
 
 		Run.onRunStartGlobal += Session.Begin;
 		Run.onRunDestroyGlobal += Session.End;
@@ -88,24 +82,30 @@ public class Setup : BaseUnityPlugin
 		return false;
 	}
 
-	private static RuleDef DifficultyRule => RuleCatalog.allRuleDefs.First();
-
 	[HarmonyPatch(typeof(RuleCatalog), nameof(RuleCatalog.Init))]
 	[HarmonyPostfix]
 	private static void AddDifficulty()
 	{
-		RuleChoiceDef ruleChoice = DifficultyRule.AddChoice(difficulty.nameToken);
+		RuleDef difficulties = RuleCatalog.allRuleDefs.First();
+		choice = difficulties.AddChoice(difficulty.nameToken);
 
-		ruleChoice.difficultyIndex = index;
-		ruleChoice.tooltipNameToken = difficulty.nameToken;
-		ruleChoice.tooltipNameColor = difficulty.color;
-		ruleChoice.tooltipBodyToken = difficulty.descriptionToken;
-		ruleChoice.serverTag = difficulty.serverTag;
-		ruleChoice.sprite = difficulty.iconSprite;
-		ruleChoice.globalIndex = RuleCatalog.allChoicesDefs.Count;
+		choice.difficultyIndex = index;
+		choice.tooltipNameToken = difficulty.nameToken;
+		choice.tooltipNameColor = difficulty.color;
+		choice.serverTag = difficulty.serverTag;
+		choice.sprite = difficulty.iconSprite;
+		choice.globalIndex = RuleCatalog.allChoicesDefs.Count;
 
-		RuleCatalog.allChoicesDefs.Add(ruleChoice);
-		RuleCatalog.ruleChoiceDefsByGlobalName[ruleChoice.globalName] = ruleChoice;
+		RuleCatalog.allChoicesDefs.Add(choice);
+		RuleCatalog.ruleChoiceDefsByGlobalName[choice.globalName] = choice;
+
+		foreach ( RuleChoiceDef definition in difficulties.choices )
+			if ( definition.difficultyIndex == ( eclipseMode ?
+					DifficultyIndex.Eclipse8 : DifficultyIndex.Hard ))
+			{
+				other = definition;
+				break;
+			}
 
 		CheckCompatibility(Chainloader.PluginInfos);
 	}
@@ -146,9 +146,6 @@ public class Setup : BaseUnityPlugin
 		return true;
 	}
 
-	private static DifficultyIndex BaseDifficulty => eclipseMode ?
-			DifficultyIndex.Eclipse8 : DifficultyIndex.Hard;
-
 	[HarmonyPatch(typeof(NetworkExtensions), nameof(NetworkExtensions.Write),
 			new Type[] { typeof(UnityEngine.Networking.NetworkWriter), typeof(RuleBook) })]
 	[HarmonyPrefix]
@@ -159,9 +156,7 @@ public class Setup : BaseUnityPlugin
 			var ruleBook = new RuleBook();
 
 			ruleBook.Copy(src);
-			ruleBook.ApplyChoice(
-					DifficultyRule.FindChoice(BaseDifficulty.ToString())
-				);
+			ruleBook.ApplyChoice(other);
 
 			src = ruleBook;
 		}
@@ -169,16 +164,16 @@ public class Setup : BaseUnityPlugin
 
 	[HarmonyPatch(typeof(Run), nameof(Run.OnSerialize))]
 	[HarmonyPrefix]
-	private static void SendBaseDifficulty(Run __instance, ref int __state)
+	private static void SendBaseIndex(Run __instance, ref int __state)
 	{
 		__state = __instance.selectedDifficultyInternal;
 
-		if ( __instance.selectedDifficulty == index )
-			__instance.selectedDifficultyInternal = (int) BaseDifficulty;
+		if ( index == __instance.selectedDifficulty )
+			__instance.selectedDifficultyInternal = (int) other.difficultyIndex;
 	}
 
 	[HarmonyPatch(typeof(Run), nameof(Run.OnSerialize))]
 	[HarmonyPostfix]
-	private static void RestoreDifficulty(Run __instance, int __state)
+	private static void RestoreIndex(Run __instance, int __state)
 			=> __instance.selectedDifficultyInternal = __state;
 }

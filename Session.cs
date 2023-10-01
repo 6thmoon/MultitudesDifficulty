@@ -46,20 +46,17 @@ public static class Session
 	private static void GreetUser()
 	{
 		if ( broadcast ) return;
-
-		static void sendMessage(string message) =>
-			Chat.SendBroadcastChat(new Chat.SimpleChatMessage {
-					baseToken = "<color=#"
-						+ UnityEngine.ColorUtility.ToHtmlStringRGB(Setup.theme)
-						+ ">" + message + "</color>"
-				});
+		string text;
+		broadcast = true;
 
 		if ( Setup.forceEnable || RoR2Application.isInMultiPlayer )
-			sendMessage(Settings.BuildDescription(verbose: false));
+			text = Settings.BuildDescription(verbose: false);
 		else if ( Setup.eclipseMode )
-			sendMessage("Good luck.");
+			text = "Good luck.";
+		else return;
 
-		broadcast = true;
+		text = "<color=#" + ColorUtility.ToHtmlStringRGB(Setup.theme) + ">" + text + "</color>";
+		Chat.SendBroadcastChat(new Chat.SimpleChatMessage { baseToken = text });
 	}
 
 	[HarmonyPatch(typeof(Run), nameof(Run.participatingPlayerCount), MethodType.Getter)]

@@ -1,6 +1,7 @@
 ﻿using BepInEx.Configuration;
-using RoR2.UI;
 using System.IO;
+using DifficultyIcon = RoR2.UI.CurrentDifficultyIconController;
+using TextMesh = RoR2.UI.HGTextMeshProUGUI;
 
 namespace Local.Difficulty.Multitudes;
 
@@ -107,36 +108,26 @@ public static class Settings
 			).Value;
 	}
 
-	[HarmonyPatch(typeof(TimerText), nameof(TimerText.Awake))]
-	[HarmonyPatch(typeof(InfiniteTowerWaveCounter),
-			nameof(InfiniteTowerWaveCounter.OnEnable))]
+	[HarmonyPatch(typeof(DifficultyIcon), nameof(DifficultyIcon.Start))]
 	[HarmonyPrefix]
 	private static void ShowPlayerCount(Component __instance)
 	{
-		const string name = "PlayerText";
-		Transform other = __instance.transform;
-
-		if ( __instance is InfiniteTowerWaveCounter )
-		{
-			if ( other.Find(name) is not null ) return;
-			else other = other.Find("WaveText");
-		}
-
-		var text = new GameObject(name).AddComponent<HGTextMeshProUGUI>();
+		Transform parent = __instance.transform;
+		var text = new GameObject("PlayerText").AddComponent<TextMesh>();
 
 		Transform transform = text.transform;
-		transform.SetParent(other.parent);
+		transform.SetParent(parent);
 
-		transform.localPosition = other.localPosition;
-		transform.localRotation = new Quaternion(0, -other.rotation.y * 0.25f, 0, 1);
-		transform.localScale = other.localScale;
+		transform.localPosition = Vector3.zero;
+		transform.localRotation = new Quaternion(0, -parent.rotation.y * 0.25f, 0, 1);
+		transform.localScale = Vector3.one;
 
 		RectTransform rectangle = text.rectTransform;
 
-		rectangle.anchorMax = Vector2.one;
-		rectangle.anchorMin = Vector2.zero;
+		rectangle.anchorMin = Vector2.right;
+		rectangle.anchorMax = Vector2.one + Vector2.right * 1.5f;
+		rectangle.offsetMin = Vector2.down - Vector2.one * 0.75f;
 		rectangle.offsetMax = Vector2.zero;
-		rectangle.offsetMin = new Vector2(-1.5f, -1);
 
 		text.alignment = TMPro.TextAlignmentOptions.BottomLeft;
 		text.fontSize = 12;
