@@ -101,7 +101,7 @@ public static class Session
 //	[HarmonyPrefix]
 	private static void AdjustBossRewards(BossGroup __instance)
 	{
-		if ( ! extraRewards )
+		if ( __instance.scaleRewardsByPlayerCount && ! extraRewards )
 		{
 			Setup.GetPlayerCount(out int playerCount);
 			int originalRewards = ( 1 + __instance.bonusRewardCount ) *
