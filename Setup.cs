@@ -26,7 +26,7 @@ namespace Local.Difficulty.Multitudes;
 public class Setup : BaseUnityPlugin
 {
 	public const string identifier = "local.difficulty.multitudes";
-	public const string version = "0.5.1";
+	public const string version = "1.0.0";
 
 	public static DifficultyIndex index;
 	public static Color theme;
@@ -41,6 +41,7 @@ public class Setup : BaseUnityPlugin
 		Settings.Load(Config, out eclipseMode);
 		SceneManager.sceneUnloaded += _ =>
 		{
+			if ( choice is null ) return;
 			Settings.Load(Config);
 
 			choice.tooltipBodyToken = difficulty.descriptionToken = Settings.BuildDescription();

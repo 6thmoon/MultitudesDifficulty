@@ -14,15 +14,15 @@ It is recommended that you install with [*r2modman*](https://thunderstore.io/pac
 
 | Title | Input | Description |
 | - | - | - |
-| Additional Player Count | *¼ to 250* | Add this many players to the game, increasing the difficulty of enemies. Also affects the other options listed below. |
-| Eclipse Mode | *True/False* | Use eclipse modifiers. Please note, this requires a restart in order to take effect. |
-| Additional Interactables | *Percent* | Increase this percentage for more loot (i.e. chests, shrines, etc.) on each stage, proportional to player count. |
-| Extra Item Rewards | *True/False*  | Enable to drop additional items from the teleporter event, other bosses, and hidden realms. |
-| Income Penalty | *Percent* | Gold is typically split between all players. Lower this value to lessen this effect, increasing player income. |
-| Bonus Health | *Percent* | Certain enemies receive bonus health in multiplayer. Reduce the amount granted to teleporter bosses and unique encounters. |
-| Teleporter Duration | *Percent* | The extent at which player count is considered when determining charge rate for holdout zones. Not recommended. |
-| Ignore Disconnected Players | *True/False* | By default, players that leave a multiplayer lobby are still taken into account, until they reconnect. |
-| Force Enable | *True/False* | For use with other difficulty options. Apply the increase to player count regardless of selection. |
+| Additional Player Count | ¼ to 250 | Add this many players to the game, increasing the difficulty of enemies. Also affects the other options listed below. |
+| Eclipse Mode | Boolean | Use eclipse modifiers. Please note, this requires a restart in order to take effect. |
+| Additional Interactables | Percent | Increase this percentage for more loot (i.e. chests, shrines, etc.) on each stage, proportional to player count. |
+| Extra Item Rewards | Boolean  | Enable to drop additional items from the teleporter event, other bosses, and hidden realms. |
+| Income Penalty | Percent | Gold is typically split between all players. Lower this value to lessen this effect, increasing player income. |
+| Bonus Health | Percent | Certain enemies receive bonus health in multiplayer. Reduce the amount granted to teleporter bosses and unique encounters. |
+| Teleporter Duration | Percent | The extent at which player count is considered when determining charge rate for holdout zones. Not recommended. |
+| Ignore Disconnected Players | Boolean | By default, players that leave a multiplayer lobby are still taken into account, until they reconnect. |
+| Force Enable | Boolean | For use with other difficulty options. Apply the increase to player count regardless of selection. |
 
 Note that values of **0**% result in identical behavior to a singleplayer game with respect to each parameter. By contrast, selecting **100**% provides the full effect of *Additional Player Count*. If an intermediate value is chosen, the outcome will scale linearly in between.
 
@@ -33,6 +33,9 @@ Note that values of **0**% result in identical behavior to a singleplayer game w
 Please report any feedback or issues discovered [here](https://github.com/6thmoon/MultitudesDifficulty/issues). Feel free to check out my [other](https://thunderstore.io/package/6thmoon/?ordering=top-rated) work as well.
 
 ## Version History
+
+#### `1.0.0`
+- Update for *Seekers of the Storm*.
 
 #### `0.5.1`
 - Prevent a couple of minor display errors in certain circumstances.

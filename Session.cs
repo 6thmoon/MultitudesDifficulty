@@ -118,7 +118,8 @@ public static class Session
 		}
 	}
 
-	[HarmonyPatch(typeof(TeamManager), nameof(TeamManager.GiveTeamMoney))]
+	[HarmonyPatch(typeof(TeamManager), nameof(TeamManager.GiveTeamMoney),
+			new Type[] { typeof(TeamIndex), typeof(uint) })]
 	[HarmonyPrefix]
 	private static void AdjustPlayerIncome(ref uint money)
 	{
