@@ -5,11 +5,11 @@ using TextMesh = RoR2.UI.HGTextMeshProUGUI;
 
 namespace Local.Difficulty.Multitudes;
 
-public static class Settings
+internal static class Settings
 {
-	public static void Load(ConfigFile configuration) => Load(configuration, out _);
+	internal static void Load(ConfigFile configuration) => Load(configuration, out _);
 
-	public static void Load(ConfigFile configuration, out bool eclipse)
+	internal static void Load(ConfigFile configuration, out bool eclipse)
 	{
 		var percentage = new AcceptableValueRange<decimal>(0, 100);
 
@@ -21,13 +21,13 @@ public static class Settings
 
 		section("General");
 
-		Session.additionalPlayers = configuration.Bind(
+		Session.players = configuration.Bind(
 				section: title,
 				key: "Additional Player Count",
 				defaultValue: 1m,
 				new ConfigDescription(
-					"Add this many players to the game, increasing the difficulty"
-						+ " of enemies. Also affects the other options listed below.",
+					"Add this many players to the game, increasing the difficulty of enemies."
+						+ " Also affects the other options listed below.",
 					acceptableValues: new AcceptableValueRange<decimal>(0.25m, 250)
 			)).Value;
 
@@ -37,6 +37,14 @@ public static class Settings
 				defaultValue: false,
 				description: "Use eclipse modifiers."
 					+ " Please note, this requires a restart in order to take effect."
+			).Value;
+
+		Session.multiply = configuration.Bind(
+				section: title,
+				key: "Use Multiplicative Scaling",
+				defaultValue: false,
+				description: "Change this in order to multiply player count instead."
+					+ " Similar to the original version."
 			).Value;
 
 		section("Advanced");
@@ -134,11 +142,11 @@ public static class Settings
 		text.faceColor = Setup.theme;
 		text.outlineWidth = 0.125f;
 
-		int playerCount = Run.instance?.participatingPlayerCount ?? 0;
-		text.SetText(FormatFraction(Session.additionalPlayers % 1 + playerCount) + "P");
+		Setup.GetPlayerCount(out int count);
+		text.SetText(FormatFraction(count + Session.GetAdditionalPlayers()) + "P");
 	}
 
-	public static string BuildDescription(bool verbose = true)
+	internal static string BuildDescription(bool verbose = true)
 	{
 		string description = "";
 		if ( verbose )
@@ -152,8 +160,9 @@ public static class Settings
 		string lunar = ColorCatalog.GetColorHexString(ColorCatalog.ColorIndex.LunarItem),
 				equipment = ColorCatalog.GetColorHexString(ColorCatalog.ColorIndex.Equipment);
 
-		return description + "<style=cStack>>Player Count:</style> <style=cDeath>" +
-					"+" + FormatFraction(Session.additionalPlayers) + "</style>\n" +
+		description += "<style=cStack>>Player Count:</style> <style=cDeath>" +
+					( Session.multiply ? "<font-weight=\"900\">×</font-weight>" :
+							"+" ) + FormatFraction(Session.players) + "</style>\n" +
 			"<style=cStack>>Additional Interactables:</style> <style=cShrine>" +
 					FormatPercent(Session.interactableScale, "None") + "</style>\n" +
 			"<style=cStack>>Extra Item Rewards:</style> " +
@@ -162,10 +171,16 @@ public static class Settings
 			"<style=cStack>>Player Income:</style> <style=cIsUtility>" +
 					"+" + FormatPercent(1 - Session.incomePenalty) + " </style>\n" +
 			"<style=cStack>>Enemy Bonus Health:</style> <style=cIsVoid>" +
-					FormatPercent(Session.bonusHealth - 1, "+100%", "Off") + "</style>\n" +
-			"<style=cStack>>Teleporter Duration:</style> <sprite name=\"TP\">" +
+					FormatPercent(Session.bonusHealth - 1, "+100%", "Off") + "</style>\n";
+
+		if ( verbose || Session.teleporterChargeRate is not 0 )
+		{
+			description += "<style=cStack>>Teleporter Duration:</style> <sprite name=\"TP\">" +
 					"<color=#" + lunar + ">+" +
 							FormatPercent(Session.teleporterChargeRate) + "</color>";
+		}
+
+		return description;
 	}
 
 	private static string FormatFraction(decimal value)
@@ -179,11 +194,11 @@ public static class Settings
 				if ( integer == 0 ) return "0";
 				break;
 
-			case < 0.375m:
+			case < 3/8m:
 				fraction = "¼";
 				break;
 
-			case > 0.625m:
+			case > 5/8m:
 				fraction = "¾";
 				break;
 
@@ -195,7 +210,7 @@ public static class Settings
 		return integer != 0 ? integer + fraction : fraction;
 	}
 
-	public static string FormatPercent(decimal value, string zero = null, string one = null)
+	private static string FormatPercent(decimal value, string zero = null, string one = null)
 	{
 		string text = null;
 

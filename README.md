@@ -16,6 +16,7 @@ It is recommended that you install with [*r2modman*](https://thunderstore.io/pac
 | - | - | - |
 | Additional Player Count | ¼ to 250 | Add this many players to the game, increasing the difficulty of enemies. Also affects the other options listed below. |
 | Eclipse Mode | Boolean | Use eclipse modifiers. Please note, this requires a restart in order to take effect. |
+| Use Multiplicative Scaling | Boolean | Change this in order to multiply player count instead. Similar to the original version. |
 | Additional Interactables | Percent | Increase this percentage for more loot (i.e. chests, shrines, etc.) on each stage, proportional to player count. |
 | Extra Item Rewards | Boolean  | Enable to drop additional items from the teleporter event, other bosses, and hidden realms. |
 | Income Penalty | Percent | Gold is typically split between all players. Lower this value to lessen this effect, increasing player income. |
@@ -30,9 +31,13 @@ Note that values of **0**% result in identical behavior to a singleplayer game w
 
 - In multiplayer, clients may notice inaccurate information presented in the user interface regarding difficulty level. This is purely visual and should not affect gameplay. Only the host needs to have this installed.
 
-Please report any feedback or issues discovered [here](https://github.com/6thmoon/MultitudesDifficulty/issues). Feel free to check out my [other](https://thunderstore.io/package/6thmoon/?ordering=top-rated) work as well.
+Please report any feedback or issues discovered [here](https://github.com/6thmoon/MultitudesDifficulty/issues). Feel free to check out my [other](https://thunderstore.io/c/riskofrain2/p/6thmoon/?deprecated=true&ordering=most-downloaded) work as well.
 
 ## Version History
+
+#### `1.1.0`
+- Introduce option to multiply instead of adding to player count.
+- Various code and compatibility improvements.
 
 #### `1.0.0`
 - Update for *Seekers of the Storm*.

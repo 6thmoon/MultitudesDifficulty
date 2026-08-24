@@ -5,14 +5,19 @@ global using System;
 global using System.Collections.Generic;
 global using System.Linq;
 global using UnityEngine;
+global using Console = System.Console;
 using BepInEx;
 using BepInEx.Bootstrap;
+using Mono.Cecil.Cil;
+using MonoMod.Cil;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Security.Permissions;
+using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
 using DifficultyAPI = R2API.DifficultyAPI;
 using LegacyAPI = Legacy::R2API.DifficultyAPI;
+using Version = System.Version;
 using Resources = MultitudesDifficulty.Properties.Resources;
 
 [assembly: AssemblyVersion(Local.Difficulty.Multitudes.Setup.version)]
@@ -26,17 +31,17 @@ namespace Local.Difficulty.Multitudes;
 public class Setup : BaseUnityPlugin
 {
 	public const string identifier = "local.difficulty.multitudes";
-	public const string version = "1.0.0";
+	public const string version = "1.1.0";
 
-	public static DifficultyIndex index;
-	public static Color theme;
+	internal static DifficultyIndex index;
+	internal static Color theme;
 
 	private static DifficultyDef difficulty;
 	private static RuleChoiceDef other, choice;
 
 	public static bool eclipseMode, lobbyPlayerCount, forceEnable;
 
-	public void Awake()
+	protected void Awake()
 	{
 		Settings.Load(Config, out eclipseMode);
 		SceneManager.sceneUnloaded += _ =>
@@ -74,11 +79,11 @@ public class Setup : BaseUnityPlugin
 
 	[HarmonyPatch(typeof(Run), nameof(Run.participatingPlayerCount), MethodType.Getter)]
 	[HarmonyPrefix]
-	public static bool GetPlayerCount(out int __result)
+	internal static bool GetPlayerCount(out int __result)
 	{
 		var players = PlayerCharacterMasterController.instances;
-		__result = lobbyPlayerCount ? players.Count :
-				players.Where( player => player.isConnected ).Count();
+		__result = lobbyPlayerCount ?
+				players.Count : players.Where( player => player.isConnected ).Count();
 
 		return false;
 	}
@@ -87,7 +92,8 @@ public class Setup : BaseUnityPlugin
 	[HarmonyPostfix]
 	private static void AddDifficulty()
 	{
-		RuleDef difficulties = RuleCatalog.allRuleDefs.First();
+		RuleDef difficulties = RuleCatalog.allRuleDefs.First(
+				( RuleDef definition ) => definition.globalName is "Difficulty");
 		choice = difficulties.AddChoice(difficulty.nameToken);
 
 		choice.difficultyIndex = index;
@@ -147,34 +153,51 @@ public class Setup : BaseUnityPlugin
 		return true;
 	}
 
-	[HarmonyPatch(typeof(NetworkExtensions), nameof(NetworkExtensions.Write),
-			new Type[] { typeof(UnityEngine.Networking.NetworkWriter), typeof(RuleBook) })]
-	[HarmonyPrefix]
-	private static void AdjustRuleBook(ref RuleBook src)
+	[HarmonyPatch(typeof(NetworkRuleBook), nameof(NetworkRuleBook.OnSerialize))]
+	[HarmonyPatch(typeof(RunReport), nameof(RunReport.Write))]
+	[HarmonyILManipulator]
+	private static void AdjustRuleBook(ILContext context)
 	{
-		if ( src.FindDifficulty() == index )
+		ILCursor cursor = new(context);
+		MethodInfo method = typeof(RoR2.NetworkExtensions).GetMethod(
+				nameof(NetworkExtensions.Write), [ typeof(NetworkWriter), typeof(RuleBook) ]);
+
+		if ( cursor.TryGotoNext(( Instruction i ) => i.MatchCall(method)) )
 		{
-			var ruleBook = new RuleBook();
+			cursor.EmitDelegate(( RuleBook original ) =>
+			{
+				if ( original.FindDifficulty() != index )
+					return original;
 
-			ruleBook.Copy(src);
-			ruleBook.ApplyChoice(other);
+				var ruleBook = new RuleBook();
 
-			src = ruleBook;
+				ruleBook.Copy(original);
+				ruleBook.ApplyChoice(other);
+
+				return ruleBook;
+			});
 		}
+		else Console.WriteLine("Unable to modify rulebook serialization.");
 	}
 
 	[HarmonyPatch(typeof(Run), nameof(Run.OnSerialize))]
-	[HarmonyPrefix]
-	private static void SendBaseIndex(Run __instance, ref int __state)
+	[HarmonyILManipulator]
+	private static void SendBaseIndex(ILContext context)
 	{
-		__state = __instance.selectedDifficultyInternal;
+		ILCursor cursor = new(context);
+		FieldInfo field = typeof(Run).GetField(
+				nameof(Run.selectedDifficultyInternal), AccessTools.all);
 
-		if ( index == __instance.selectedDifficulty )
-			__instance.selectedDifficultyInternal = (int) other.difficultyIndex;
+		while ( cursor.TryGotoNext(MoveType.After, ( Instruction i ) => i.MatchLdfld(field)) )
+		{
+			cursor.EmitDelegate(( DifficultyIndex value ) =>
+			{
+				if ( value != index ) return value;
+				else return other.difficultyIndex;
+			});
+		}
+
+		if ( cursor.Index is 0 )
+			Console.WriteLine("Unable to map index of difficulty.");
 	}
-
-	[HarmonyPatch(typeof(Run), nameof(Run.OnSerialize))]
-	[HarmonyPostfix]
-	private static void RestoreIndex(Run __instance, int __state)
-			=> __instance.selectedDifficultyInternal = __state;
 }
