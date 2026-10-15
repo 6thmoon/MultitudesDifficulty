@@ -21,8 +21,8 @@ public static class Session
 	public static bool multiply, extraRewards;
 	public static decimal incomePenalty, bonusHealth, teleporterChargeRate;
 
-	private static Harmony instance = null;
-	private static bool broadcast;
+	static Harmony instance = null;
+	static bool broadcast;
 
 	internal static void Begin(Run thisRun)
 	{
@@ -57,7 +57,7 @@ public static class Session
 	[HarmonyPatch(typeof(Acrid.WakeUp), nameof(Acrid.WakeUp.OnExit))]
 	[HarmonyPatch(typeof(InfiniteTowerRun), nameof(InfiniteTowerRun.OnSafeWardActivated))]
 	[HarmonyPostfix]
-	private static void GreetUser()
+	static void GreetUser()
 	{
 		if ( broadcast ) return;
 		string text = "Multitudes Enabled\n";
@@ -75,7 +75,7 @@ public static class Session
 
 	[HarmonyPatch(typeof(SceneDirector), nameof(SceneDirector.Start))]
 	[HarmonyILManipulator]
-	private static void AdjustInteractableCredits(ILContext context)
+	static void AdjustInteractableCredits(ILContext context)
 	{
 		InsertHook(context, typeof(Session).GetField(nameof(interactableScale)),
 				typeof(Run).GetProperty(nameof(Run.participatingPlayerCount)).GetMethod);
@@ -83,7 +83,7 @@ public static class Session
 
 	[HarmonyPatch(typeof(BossGroup), nameof(BossGroup.DropRewards))]
 	[HarmonyILManipulator]
-	private static void AdjustBossRewards(ILContext context)
+	static void AdjustBossRewards(ILContext context)
 	{
 		ApplyPlayerAdjustment(context);
 	}
@@ -91,7 +91,7 @@ public static class Session
 	[HarmonyPatch(typeof(TeamManager), nameof(TeamManager.GiveTeamMoney),
 			[ typeof(TeamIndex), typeof(uint), typeof(bool) ])]
 	[HarmonyILManipulator]
-	private static void AdjustPlayerIncome(ILContext context)
+	static void AdjustPlayerIncome(ILContext context)
 	{
 		InsertHook(context, typeof(Session).GetField(nameof(incomePenalty)),
 				typeof(Run).GetProperty(nameof(Run.livingPlayerCount)).GetMethod);
@@ -133,7 +133,7 @@ public static class Session
 			[ typeof(CombatDirector.SpawnArgs) ])]
 	[HarmonyPatch(typeof(CharacterMaster), nameof(CharacterMaster.ScaleDifficultyAsBoss))]
 	[HarmonyILManipulator]
-	private static void AddBonusHealth(ILContext context, MethodBase __originalMethod)
+	static void AddBonusHealth(ILContext context, MethodBase __originalMethod)
 	{
 		if ( __originalMethod.DeclaringType == typeof(CombatDirector) )
 		{
@@ -160,7 +160,7 @@ public static class Session
 
 	[HarmonyPatch(typeof(HoldoutZoneController), nameof(HoldoutZoneController.DoUpdate))]
 	[HarmonyILManipulator]
-	private static void AdjustChargeRate(ILContext context)
+	static void AdjustChargeRate(ILContext context)
 	{
 		MethodInfo method = typeof(HoldoutZoneController).GetMethod(
 				nameof(HoldoutZoneController.CountLivingPlayers), AccessTools.all);
@@ -170,7 +170,7 @@ public static class Session
 	[HarmonyPatch(typeof(EscapeSequenceController),
 			nameof(EscapeSequenceController.BeginEscapeSequence))]
 	[HarmonyPrefix]
-	private static void IncreaseCountdown(EscapeSequenceController __instance)
+	static void IncreaseCountdown(EscapeSequenceController __instance)
 	{
 		decimal other = GetAdditionalPlayers(teleporterChargeRate);
 		Setup.GetPlayerCount(out int count);
@@ -185,7 +185,7 @@ public static class Session
 	[HarmonyPatch(typeof(OnCollisionEventController),
 			nameof(OnCollisionEventController.OnTriggerStay))]
 	[HarmonyILManipulator]
-	private static void IncreaseDifficultyCoefficient(ILContext context)
+	static void IncreaseDifficultyCoefficient(ILContext context)
 	{
 		InsertHook(context, typeof(decimal).GetField(nameof(decimal.One)),
 				typeof(Run).GetProperty(nameof(Run.participatingPlayerCount)).GetMethod);
@@ -206,7 +206,7 @@ public static class Session
 	[HarmonyPatch(typeof(SolusHeartFinaleSequence.Death),
 			nameof(SolusHeartFinaleSequence.Death.OnEnter))]
 	[HarmonyILManipulator]
-	private static void ApplyPlayerAdjustment(ILContext context)
+	static void ApplyPlayerAdjustment(ILContext context)
 	{
 		var cursor = new ILCursor(context);
 		MethodInfo method = 
@@ -229,5 +229,5 @@ public static class Session
 	}
 
 	[Obsolete("If needed, refer to `" + nameof(GetAdditionalPlayers) + "` instead.")]
-	public static readonly decimal additionalPlayers = 0;
+	public static decimal additionalPlayers = 0;
 }

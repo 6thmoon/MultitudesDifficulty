@@ -10,6 +10,7 @@ using BepInEx;
 using BepInEx.Bootstrap;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
+using RoR2.UI;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Security.Permissions;
@@ -36,8 +37,8 @@ public class Setup : BaseUnityPlugin
 	internal static DifficultyIndex index;
 	internal static Color theme;
 
-	private static DifficultyDef difficulty;
-	private static RuleChoiceDef other, choice;
+	static DifficultyDef difficulty;
+	static RuleChoiceDef other, choice;
 
 	public static bool eclipseMode, lobbyPlayerCount, forceEnable;
 
@@ -90,7 +91,7 @@ public class Setup : BaseUnityPlugin
 
 	[HarmonyPatch(typeof(RuleCatalog), nameof(RuleCatalog.Init))]
 	[HarmonyPostfix]
-	private static void AddDifficulty()
+	static void AddDifficulty()
 	{
 		RuleDef difficulties = RuleCatalog.allRuleDefs.First(
 				( RuleDef definition ) => definition.globalName is "Difficulty");
@@ -117,7 +118,7 @@ public class Setup : BaseUnityPlugin
 		CheckCompatibility(Chainloader.PluginInfos);
 	}
 
-	private static void CheckCompatibility(Dictionary<string, PluginInfo> info)
+	static void CheckCompatibility(Dictionary<string, PluginInfo> info)
 	{
 		const string version = Legacy::R2API.R2API.PluginVersion,
 				api = Legacy::R2API.R2API.PluginGUID, module = DifficultyAPI.PluginGUID;
@@ -141,7 +142,7 @@ public class Setup : BaseUnityPlugin
 
 	[HarmonyPatch(typeof(DifficultyCatalog), nameof(DifficultyCatalog.GetDifficultyDef))]
 	[HarmonyPrefix]
-	private static bool GetDifficulty(
+	static bool GetDifficulty(
 			DifficultyIndex difficultyIndex, ref DifficultyDef __result)
 	{
 		if ( difficultyIndex == index )
@@ -156,7 +157,7 @@ public class Setup : BaseUnityPlugin
 	[HarmonyPatch(typeof(NetworkRuleBook), nameof(NetworkRuleBook.OnSerialize))]
 	[HarmonyPatch(typeof(RunReport), nameof(RunReport.Write))]
 	[HarmonyILManipulator]
-	private static void AdjustRuleBook(ILContext context)
+	static void AdjustRuleBook(ILContext context)
 	{
 		ILCursor cursor = new(context);
 		MethodInfo method = typeof(RoR2.NetworkExtensions).GetMethod(
@@ -182,7 +183,7 @@ public class Setup : BaseUnityPlugin
 
 	[HarmonyPatch(typeof(Run), nameof(Run.OnSerialize))]
 	[HarmonyILManipulator]
-	private static void SendBaseIndex(ILContext context)
+	static void SendBaseIndex(ILContext context)
 	{
 		ILCursor cursor = new(context);
 		FieldInfo field = typeof(Run).GetField(
@@ -199,5 +200,16 @@ public class Setup : BaseUnityPlugin
 
 		if ( cursor.Index is 0 )
 			Console.WriteLine("Unable to map index of difficulty.");
+	}
+
+	[HarmonyPatch(typeof(KarmaIcon), nameof(KarmaIcon.OnEnable))]
+	[HarmonyPrefix]
+	static void StopTextOverlap(KarmaIcon __instance)
+	{
+		Transform container = __instance.transform;
+		Vector3 offset = container.localPosition;
+
+		if ( offset.y < 0 )
+			container.localPosition = Vector3.Scale(new Vector3(1.25f, -1, 1), offset);
 	}
 }

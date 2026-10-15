@@ -118,7 +118,7 @@ internal static class Settings
 
 	[HarmonyPatch(typeof(DifficultyIcon), nameof(DifficultyIcon.Start))]
 	[HarmonyPrefix]
-	private static void ShowPlayerCount(Component __instance)
+	static void ShowPlayerCount(Component __instance)
 	{
 		Transform parent = __instance.transform;
 		var text = new GameObject("PlayerText").AddComponent<TextMesh>();
@@ -183,7 +183,7 @@ internal static class Settings
 		return description;
 	}
 
-	private static string FormatFraction(decimal value)
+	static string FormatFraction(decimal value)
 	{
 		decimal integer = Math.Truncate(value);
 		string fraction = "";
@@ -210,7 +210,7 @@ internal static class Settings
 		return integer != 0 ? integer + fraction : fraction;
 	}
 
-	private static string FormatPercent(decimal value, string zero = null, string one = null)
+	static string FormatPercent(decimal value, string zero = null, string one = null)
 	{
 		string text = null;
 

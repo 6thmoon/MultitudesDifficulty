@@ -35,6 +35,9 @@ Please report any feedback or issues discovered [here](https://github.com/6thmoo
 
 ## Version History
 
+#### `1.2.0`
+- Hotfix for [the](https://steamcommunity.com/games/632360/announcements/detail/669505296465396193) hotfix.
+
 #### `1.1.0`
 - Introduce option to multiply instead of adding to player count.
 - Various code and compatibility improvements.
