@@ -31,7 +31,7 @@ namespace Local.Difficulty.Multitudes;
 public class Setup : BaseUnityPlugin
 {
 	public const string identifier = "local.difficulty.multitudes";
-	public const string version = "1.1.0";
+	public const string version = "1.2.0";
 
 	internal static DifficultyIndex index;
 	internal static Color theme;

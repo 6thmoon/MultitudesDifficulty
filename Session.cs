@@ -89,7 +89,7 @@ public static class Session
 	}
 
 	[HarmonyPatch(typeof(TeamManager), nameof(TeamManager.GiveTeamMoney),
-			[ typeof(TeamIndex), typeof(uint) ])]
+			[ typeof(TeamIndex), typeof(uint), typeof(bool) ])]
 	[HarmonyILManipulator]
 	private static void AdjustPlayerIncome(ILContext context)
 	{
@@ -129,7 +129,8 @@ public static class Session
 			Console.WriteLine("No match found.\n\t" + identifier);
 	}
 
-	[HarmonyPatch(typeof(CombatDirector), nameof(CombatDirector.Spawn))]
+	[HarmonyPatch(typeof(CombatDirector), nameof(CombatDirector.Spawn),
+			[ typeof(CombatDirector.SpawnArgs) ])]
 	[HarmonyPatch(typeof(CharacterMaster), nameof(CharacterMaster.ScaleDifficultyAsBoss))]
 	[HarmonyILManipulator]
 	private static void AddBonusHealth(ILContext context, MethodBase __originalMethod)
